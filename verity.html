@@ -1760,7 +1760,16 @@
       } catch (e) {}
     }
 
+    function playVerityClip(src, vol) {
+      try {
+        var clip = new Audio(src);
+        clip.volume = vol == null ? 0.9 : vol;
+        clip.play().catch(function () {});
+      } catch (e) {}
+    }
+
     function playConsumeSound() {
+      playVerityClip('sounds/verity-you-are-mine.mp3');
       if (!audioCtx) return;
       try {
         var now = audioCtx.currentTime;
@@ -1820,11 +1829,6 @@
     function triggerPoke() {
       ensureAudio();
       playStinger();
-      try {
-        var vClip = new Audio('sounds/verity-you-are-mine.mp3');
-        vClip.volume = 0.9;
-        vClip.play().catch(function () {});
-      } catch (e) {}
       drone = startDrone();
 
       setAtmosphere(true);
@@ -2413,11 +2417,13 @@
       if (e.key !== 'Escape') return;
 
       if (gameActive && gameState === 'playing') {
+        playVerityClip('sounds/verity-no.mp3');
         triggerBossTakeover();
         return;
       }
 
       if (!gameActive && !busy && document.documentElement.classList.contains('true-form')) {
+        playVerityClip('sounds/verity-no.mp3');
         busy = true;
         pokeCount = 0;
         triggerReveal();
