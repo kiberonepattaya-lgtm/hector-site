@@ -1250,13 +1250,13 @@
       try {
         var audio = new Audio(navClips[i]);
         audio.volume = 0.85;
-        audio.play().catch(function () {});
+        audio.play().catch(function (err) { console.warn('Verity clip blocked:', navClips[i], err); });
       } catch (e) {}
     }
 
     function speakCreepy() {
+      playNavClip();
       playDrone();
-      setTimeout(playNavClip, 100);
     }
 
     navButtons.forEach(function (el) {
@@ -1764,7 +1764,7 @@
       try {
         var clip = new Audio(src);
         clip.volume = vol == null ? 0.9 : vol;
-        clip.play().catch(function () {});
+        clip.play().catch(function (err) { console.warn('Verity clip blocked:', src, err); });
       } catch (e) {}
     }
 
