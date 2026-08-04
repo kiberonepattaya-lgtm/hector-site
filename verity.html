@@ -1193,6 +1193,26 @@
 
 <script>
   (function () {
+    window.verityToast = function (msg, ok) {
+      var el = document.getElementById('verity-debug-toast');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'verity-debug-toast';
+        el.style.cssText = 'position:fixed;bottom:14px;left:14px;z-index:99999;font:12px/1.4 "SFMono-Regular",monospace;padding:8px 12px;border-radius:4px;pointer-events:none;transition:opacity .3s ease;max-width:80vw;white-space:pre-wrap;box-shadow:0 4px 14px rgba(0,0,0,0.4);';
+        document.body.appendChild(el);
+      }
+      el.textContent = msg;
+      el.style.background = ok ? '#146b2e' : '#8c1414';
+      el.style.color = '#fff';
+      el.style.opacity = '1';
+      clearTimeout(el._t);
+      el._t = setTimeout(function () { el.style.opacity = '0'; }, 4000);
+    };
+  })();
+</script>
+
+<script>
+  (function () {
     var navButtons = document.querySelectorAll('.topnav a, .topnav button');
     var audioCtx = null;
 
@@ -1244,12 +1264,16 @@
       try {
         var audio = new Audio(src);
         audio.volume = 1;
+        window.verityToast('attempting: ' + src, true);
         var p = audio.play();
-        if (p && p.catch) {
-          p.catch(function (err) { console.warn('Verity clip blocked:', src, err && err.name); });
+        if (p && p.then) {
+          p.then(function () { window.verityToast('playing: ' + src, true); });
+          p.catch(function (err) {
+            window.verityToast('BLOCKED: ' + src + '\n' + (err && err.name) + ': ' + (err && err.message), false);
+          });
         }
       } catch (e) {
-        console.warn('Verity clip error:', src, e);
+        window.verityToast('ERROR: ' + src + '\n' + e, false);
       }
     }
 
@@ -1773,12 +1797,16 @@
       try {
         var clip = new Audio(src);
         clip.volume = 1;
+        if (window.verityToast) window.verityToast('attempting: ' + src, true);
         var p = clip.play();
-        if (p && p.catch) {
-          p.catch(function (err) { console.warn('Verity clip blocked:', src, err && err.name); });
+        if (p && p.then) {
+          p.then(function () { if (window.verityToast) window.verityToast('playing: ' + src, true); });
+          p.catch(function (err) {
+            if (window.verityToast) window.verityToast('BLOCKED: ' + src + '\n' + (err && err.name) + ': ' + (err && err.message), false);
+          });
         }
       } catch (e) {
-        console.warn('Verity clip error:', src, e);
+        if (window.verityToast) window.verityToast('ERROR: ' + src + '\n' + e, false);
       }
     }
 
