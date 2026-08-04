@@ -1240,21 +1240,17 @@
       detune.stop(now + dur + 0.05);
     }
 
-    function playBoosted(src, boost) {
+    function playClip(src) {
       try {
         var audio = new Audio(src);
         audio.volume = 1;
-        var ctx = ensureAudio();
-        if (ctx) {
-          try {
-            var node = ctx.createMediaElementSource(audio);
-            var gain = ctx.createGain();
-            gain.gain.value = boost || 3;
-            node.connect(gain).connect(ctx.destination);
-          } catch (e) {}
+        var p = audio.play();
+        if (p && p.catch) {
+          p.catch(function (err) { console.warn('Verity clip blocked:', src, err && err.name); });
         }
-        audio.play().catch(function (err) { console.warn('Verity clip blocked:', src, err); });
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Verity clip error:', src, e);
+      }
     }
 
     var navClips = ['sounds/verity-i-know.mp3', 'sounds/verity-exactly.mp3', 'sounds/verity-something.mp3'];
@@ -1264,7 +1260,7 @@
       var i = Math.floor(Math.random() * navClips.length);
       if (i === lastClip) i = (i + 1) % navClips.length;
       lastClip = i;
-      playBoosted(navClips[i], 3.5);
+      playClip(navClips[i]);
     }
 
     function speakCreepy() {
@@ -1773,21 +1769,17 @@
       } catch (e) {}
     }
 
-    function playVerityClip(src, boost) {
+    function playVerityClip(src) {
       try {
         var clip = new Audio(src);
         clip.volume = 1;
-        var ctx = ensureAudio();
-        if (ctx) {
-          try {
-            var node = ctx.createMediaElementSource(clip);
-            var gain = ctx.createGain();
-            gain.gain.value = boost || 3.5;
-            node.connect(gain).connect(ctx.destination);
-          } catch (e) {}
+        var p = clip.play();
+        if (p && p.catch) {
+          p.catch(function (err) { console.warn('Verity clip blocked:', src, err && err.name); });
         }
-        clip.play().catch(function (err) { console.warn('Verity clip blocked:', src, err); });
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Verity clip error:', src, e);
+      }
     }
 
     function playConsumeSound() {
