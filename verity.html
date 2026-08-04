@@ -1240,6 +1240,23 @@
       detune.stop(now + dur + 0.05);
     }
 
+    function playBoosted(src, boost) {
+      try {
+        var audio = new Audio(src);
+        audio.volume = 1;
+        var ctx = ensureAudio();
+        if (ctx) {
+          try {
+            var node = ctx.createMediaElementSource(audio);
+            var gain = ctx.createGain();
+            gain.gain.value = boost || 3;
+            node.connect(gain).connect(ctx.destination);
+          } catch (e) {}
+        }
+        audio.play().catch(function (err) { console.warn('Verity clip blocked:', src, err); });
+      } catch (e) {}
+    }
+
     var navClips = ['sounds/verity-i-know.mp3', 'sounds/verity-exactly.mp3', 'sounds/verity-something.mp3'];
     var lastClip = -1;
 
@@ -1247,11 +1264,7 @@
       var i = Math.floor(Math.random() * navClips.length);
       if (i === lastClip) i = (i + 1) % navClips.length;
       lastClip = i;
-      try {
-        var audio = new Audio(navClips[i]);
-        audio.volume = 0.85;
-        audio.play().catch(function (err) { console.warn('Verity clip blocked:', navClips[i], err); });
-      } catch (e) {}
+      playBoosted(navClips[i], 3.5);
     }
 
     function speakCreepy() {
@@ -1760,10 +1773,19 @@
       } catch (e) {}
     }
 
-    function playVerityClip(src, vol) {
+    function playVerityClip(src, boost) {
       try {
         var clip = new Audio(src);
-        clip.volume = vol == null ? 0.9 : vol;
+        clip.volume = 1;
+        var ctx = ensureAudio();
+        if (ctx) {
+          try {
+            var node = ctx.createMediaElementSource(clip);
+            var gain = ctx.createGain();
+            gain.gain.value = boost || 3.5;
+            node.connect(gain).connect(ctx.destination);
+          } catch (e) {}
+        }
         clip.play().catch(function (err) { console.warn('Verity clip blocked:', src, err); });
       } catch (e) {}
     }
