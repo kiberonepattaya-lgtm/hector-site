@@ -1628,6 +1628,17 @@
 
     mascot.addEventListener('pointerleave', stopWatching);
 
+    function canGreet() {
+      return !busy && !gameActive &&
+        !document.documentElement.classList.contains('true-form') &&
+        !mascot.classList.contains('creepy');
+    }
+
+    mascot.addEventListener('pointerenter', function () {
+      if (!canGreet()) return;
+      playVerityClip('sounds/verity-greeting.mp3');
+    });
+
     function ensureAudio() {
       if (!audioCtx) {
         try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
