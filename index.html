@@ -1735,14 +1735,19 @@
 
     mascot.addEventListener('pointerleave', stopWatching);
 
+    var GREETING_COOLDOWN_MS = 20000;
+    var lastGreetingAt = -Infinity;
+
     function canGreet() {
       return !busy && !gameActive &&
         !document.documentElement.classList.contains('true-form') &&
-        !mascot.classList.contains('creepy');
+        !mascot.classList.contains('creepy') &&
+        (Date.now() - lastGreetingAt >= GREETING_COOLDOWN_MS);
     }
 
     mascot.addEventListener('pointerenter', function () {
       if (!canGreet()) return;
+      lastGreetingAt = Date.now();
       playVerityClip('sounds/verity-greeting.mp3');
     });
 
