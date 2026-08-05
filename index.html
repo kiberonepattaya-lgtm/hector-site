@@ -2214,6 +2214,7 @@
     }
 
     function showBanScreen(title, reason) {
+      playVerityClip('sounds/verity-no.mp3');
       endScreen.className = 'active lose';
       var secondsLeft = 5;
       var titleText = title || 'connection terminated';
