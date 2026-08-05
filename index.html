@@ -1737,6 +1737,7 @@
 
     var GREETING_COOLDOWN_MS = 20000;
     var lastGreetingAt = -Infinity;
+    var greetingConfirmed = false;
 
     function canGreet() {
       return !busy && !gameActive &&
@@ -1745,11 +1746,25 @@
         (Date.now() - lastGreetingAt >= GREETING_COOLDOWN_MS);
     }
 
-    mascot.addEventListener('pointerenter', function () {
+    function greetNow() {
       if (!canGreet()) return;
       lastGreetingAt = Date.now();
-      playVerityClip('sounds/verity-greeting.mp3');
-    });
+      var p = playVerityClip('sounds/verity-greeting.mp3');
+      if (p && p.then) p.then(function () { greetingConfirmed = true; }).catch(function () {});
+    }
+
+    mascot.addEventListener('pointerenter', greetNow);
+
+    setTimeout(greetNow, 1200);
+
+    var greetingFallbackEvents = ['pointerdown', 'keydown', 'touchstart', 'wheel'];
+    function greetingFallback() {
+      greetingFallbackEvents.forEach(function (evt) { window.removeEventListener(evt, greetingFallback); });
+      if (greetingConfirmed) return;
+      lastGreetingAt = -Infinity;
+      greetNow();
+    }
+    greetingFallbackEvents.forEach(function (evt) { window.addEventListener(evt, greetingFallback, { once: true }); });
 
     function ensureAudio() {
       if (!audioCtx) {
@@ -1928,8 +1943,10 @@
             if (window.verityToast) window.verityToast('BLOCKED: ' + src + '\n' + (err && err.name) + ': ' + (err && err.message), false);
           });
         }
+        return p;
       } catch (e) {
         if (window.verityToast) window.verityToast('ERROR: ' + src + '\n' + e, false);
+        return null;
       }
     }
 
