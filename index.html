@@ -684,6 +684,74 @@
     html.true-form h1.name { animation: none !important; }
   }
 
+  /* ---------- party mode (bloody moon) ---------- */
+
+  :root.party-mode {
+    --bg: #0a0000;
+    --bg2: #1d0404;
+    --ink: #f7dede;
+    --ink-dim: #d08a8a;
+    --ink-faint: #7a3838;
+    --accent: #ff2e2e;
+    --accent-soft: #8f1414;
+    --line: rgba(255, 60, 60, 0.3);
+    --line-soft: rgba(255, 60, 60, 0.15);
+    --shadow: rgba(0, 0, 0, 0.75);
+    --nav-bg: rgba(10, 0, 0, 0.86);
+  }
+
+  html.party-mode .wrap {
+    filter: saturate(1.25) brightness(0.82) contrast(1.2);
+  }
+
+  html.party-mode #vignette {
+    opacity: 1;
+    background: radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(60, 0, 0, 0.7) 100%);
+  }
+
+  html.party-mode .statusline .dot {
+    background: #ff2e2e;
+    box-shadow: 0 0 10px #ff2e2e;
+  }
+
+  #bloodmoon {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(circle at 50% 14%, rgba(255, 20, 20, 0.55) 0%, rgba(120, 0, 0, 0.28) 32%, rgba(0, 0, 0, 0) 62%);
+    mix-blend-mode: screen;
+    transition: opacity 0.7s ease;
+  }
+
+  html.party-mode #bloodmoon {
+    opacity: 1;
+    animation: bloodPulse 3.6s ease-in-out infinite;
+  }
+
+  @keyframes bloodPulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes partyFlicker {
+    0%, 94%, 100% { opacity: 1; }
+    95% { opacity: 0.7; }
+    97% { opacity: 1; }
+  }
+
+  html.party-mode h1.name {
+    color: #ff3b3b;
+    text-shadow: 0 0 18px rgba(255, 30, 30, 0.55);
+    animation: partyFlicker 4s steps(1) infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.party-mode #bloodmoon { animation: none !important; }
+    html.party-mode h1.name { animation: none !important; }
+  }
+
   /* ---------- glitch transition ---------- */
 
   #glitch-transition {
@@ -1138,6 +1206,7 @@
 <canvas id="dust" aria-hidden="true"></canvas>
 <div id="flash" aria-hidden="true"></div>
 <div id="vignette" aria-hidden="true"></div>
+<div id="bloodmoon" aria-hidden="true"></div>
 <canvas id="glitch-transition" aria-hidden="true"></canvas>
 <canvas id="wormhole" aria-hidden="true"></canvas>
 <div id="game" aria-hidden="true">
@@ -1188,6 +1257,44 @@
     });
 
     sync();
+  })();
+</script>
+
+<script>
+  (function () {
+    var buffer = '';
+    var maxLen = 24;
+
+    function togglePartyMode() {
+      var root = document.documentElement;
+      var entering = !root.classList.contains('party-mode');
+      root.classList.toggle('party-mode', entering);
+    }
+
+    var commands = {
+      '/party': togglePartyMode
+    };
+
+    document.addEventListener('keydown', function (e) {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      var tag = (document.activeElement && document.activeElement.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement && document.activeElement.isContentEditable)) return;
+
+      if (e.key === 'Backspace') {
+        buffer = buffer.slice(0, -1);
+        return;
+      }
+      if (e.key.length !== 1) return;
+
+      buffer = (buffer + e.key.toLowerCase()).slice(-maxLen);
+
+      Object.keys(commands).forEach(function (cmd) {
+        if (buffer.slice(-cmd.length) === cmd) {
+          buffer = '';
+          commands[cmd]();
+        }
+      });
+    });
   })();
 </script>
 
@@ -2195,31 +2302,61 @@
       gameCtx.restore();
     }
 
-    function drawBoss() {
+    function chromaBlob(pathFn, shift) {
+      gameCtx.save(); gameCtx.translate(-1.6 - shift, 0); gameCtx.fillStyle = 'rgba(230,30,30,0.8)'; pathFn(); gameCtx.fill(); gameCtx.restore();
+      gameCtx.save(); gameCtx.translate(1.6 + shift, 0.6); gameCtx.fillStyle = 'rgba(30,220,90,0.8)'; pathFn(); gameCtx.fill(); gameCtx.restore();
+      gameCtx.save(); gameCtx.fillStyle = '#0d0700'; pathFn(); gameCtx.fill(); gameCtx.restore();
+    }
+
+    function drawBoss(ts) {
       var r = boss.r;
+      var jitter = boss.phase === 4 ? 3.2 : boss.phase === 3 ? 2.2 : 1.2;
+      var shift = reduceMotion ? 0 : jitter * Math.sin((ts || 0) / 70);
+
       gameCtx.save();
       gameCtx.translate(boss.x, boss.y);
-      gameCtx.shadowColor = boss.telegraphing ? 'rgba(255,205,70,0.95)' : (boss.phase === 4 ? 'rgba(255,120,40,0.7)' : 'rgba(181,138,31,0.55)');
+
+      gameCtx.shadowColor = boss.telegraphing ? 'rgba(255,60,60,0.95)' : (boss.phase === 4 ? 'rgba(255,40,40,0.7)' : 'rgba(180,20,20,0.5)');
       gameCtx.shadowBlur = boss.telegraphing ? Math.max(50, r * 0.5) : (boss.phase === 4 ? r * 0.4 : r * 0.28);
-      gameCtx.fillStyle = '#100303';
+      gameCtx.fillStyle = '#d9cf22';
       gameCtx.beginPath();
-      gameCtx.ellipse(0, 0, r, r * 0.92, 0, 0, Math.PI * 2);
+      gameCtx.arc(0, 0, r, 0, Math.PI * 2);
       gameCtx.fill();
       gameCtx.shadowBlur = 0;
-      gameCtx.fillStyle = '#f4efe6';
-      gameCtx.beginPath(); gameCtx.ellipse(-r * 0.32, -r * 0.15, r * 0.17, r * 0.22, -0.15, 0, Math.PI * 2); gameCtx.fill();
-      gameCtx.beginPath(); gameCtx.ellipse(r * 0.34, -r * 0.2, r * 0.19, r * 0.24, 0.1, 0, Math.PI * 2); gameCtx.fill();
-      gameCtx.fillStyle = '#171002';
-      gameCtx.fillRect(-r * 0.34 - 1, -r * 0.28, r * 0.06, r * 0.26);
-      gameCtx.fillRect(r * 0.32 - 1, -r * 0.34, r * 0.06, r * 0.26);
-      gameCtx.fillStyle = '#e9e0cf';
+
+      gameCtx.save();
       gameCtx.beginPath();
-      var mw = r * 0.9, mh = r * 0.32, mx = -mw / 2, my = r * 0.3, teeth = 8;
-      gameCtx.moveTo(mx, my);
-      for (var i = 0; i <= teeth; i++) gameCtx.lineTo(mx + mw * i / teeth, my + (i % 2 === 0 ? 0 : mh));
-      gameCtx.lineTo(mx + mw, my);
-      gameCtx.closePath();
-      gameCtx.fill();
+      gameCtx.arc(0, 0, r, 0, Math.PI * 2);
+      gameCtx.clip();
+      var staticCount = reduceMotion ? 0 : (boss.phase === 4 ? 46 : 26);
+      for (var i = 0; i < staticCount; i++) {
+        var ang = Math.random() * Math.PI * 2;
+        var rad = r * (0.8 + Math.random() * 0.25);
+        var sx = Math.cos(ang) * rad, sy = Math.sin(ang) * rad;
+        gameCtx.globalAlpha = 0.35 + Math.random() * 0.45;
+        gameCtx.fillStyle = ['#ff3131', '#33e35f', '#3a7bff', '#fff6cf'][(Math.random() * 4) | 0];
+        var sw = 1.5 + Math.random() * 2.5;
+        gameCtx.fillRect(sx, sy, sw, sw);
+      }
+      gameCtx.globalAlpha = 1;
+      gameCtx.restore();
+
+      chromaBlob(function () {
+        gameCtx.beginPath(); gameCtx.ellipse(-r * 0.33, -r * 0.12, r * 0.17, r * 0.24, -0.15, 0, Math.PI * 2);
+      }, shift);
+      chromaBlob(function () {
+        gameCtx.beginPath(); gameCtx.ellipse(r * 0.35, -r * 0.17, r * 0.19, r * 0.26, 0.1, 0, Math.PI * 2);
+      }, shift);
+
+      chromaBlob(function () {
+        var mw = r * 1.05, mh = r * 0.5, my = r * 0.14;
+        gameCtx.beginPath();
+        gameCtx.moveTo(-mw / 2, my);
+        gameCtx.quadraticCurveTo(0, my + mh, mw / 2, my);
+        gameCtx.quadraticCurveTo(0, my + mh * 0.5, -mw / 2, my);
+        gameCtx.closePath();
+      }, shift);
+
       gameCtx.restore();
     }
 
@@ -2287,7 +2424,7 @@
     function renderGame(ts) {
       gameCtx.clearRect(0, 0, gameDims.w, gameDims.h);
       drawStarfield(ts);
-      drawBoss();
+      drawBoss(ts);
       bossBullets.forEach(function (b) { drawCodeBullet(b, '#e0a82f'); });
       playerBullets.forEach(function (b) { drawCodeBullet(b, '#6fd3c7'); });
       if (player.r > 0.5) drawPlayer();
