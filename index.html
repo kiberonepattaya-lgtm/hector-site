@@ -64,6 +64,42 @@
   }
   .skills li:last-child { border-bottom: none; }
   .skills strong { color: var(--neon); }
+  .minigame { text-align: center; }
+  .minigame h2 { margin-bottom: 6px; }
+  .minigame .hint { font-size: 1rem; margin: 0 0 14px; opacity: 0.85; }
+  .minigame .status { font-size: 1.2rem; color: var(--neon); min-height: 1.6em; margin-top: 12px; }
+  .minigame .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  #react-box {
+    height: 110px;
+    border-radius: 12px;
+    border: 2px solid var(--neon-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    cursor: pointer;
+    user-select: none;
+    background: #3a1010;
+  }
+  #react-box.go { background: #0f6b36; }
+  #react-box.idle { background: var(--bg); }
+  #keepy-area {
+    position: relative;
+    height: 220px;
+    border-radius: 12px;
+    border: 2px solid var(--neon-dim);
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+  }
+  #keepy-ball {
+    position: absolute;
+    left: 50%;
+    font-size: 2.6rem;
+    line-height: 1;
+    transform: translateX(-50%);
+  }
   nav a {
     color: var(--text);
     text-decoration: none;
@@ -303,10 +339,122 @@
     <div id="click-count">Kicks: 0</div>
   </section>
 
+  <section class="minigame" id="game-penalty">
+    <h2>🥅 Penalty Shootout</h2>
+    <p class="hint">Pick a corner. Beat the keeper!</p>
+    <div class="row">
+      <button type="button" data-dir="0">⬅ Left</button>
+      <button type="button" data-dir="1">⬆ Middle</button>
+      <button type="button" data-dir="2">Right ➡</button>
+    </div>
+    <div class="status" id="pen-status">Take your shot!</div>
+    <div id="pen-score">Goals: 0 / Shots: 0</div>
+  </section>
+
+  <section class="minigame" id="game-reaction">
+    <h2>⚡ Reaction Test</h2>
+    <p class="hint">Wait for green, then click as fast as you can.</p>
+    <div id="react-box" class="idle">Click to start</div>
+    <div class="status" id="react-status">Best: –</div>
+  </section>
+
+  <section class="minigame" id="game-keepy">
+    <h2>⚽ Keepy-Uppy</h2>
+    <p class="hint">Tap to keep the ball in the air. Don't let it drop!</p>
+    <div id="keepy-area"><div id="keepy-ball">⚽</div></div>
+    <div class="status" id="keepy-status">Tap to start. Best: 0</div>
+  </section>
+
   <footer>Made by Hector</footer>
 
   <script>
     let clickCount = 0;
+
+    // Penalty Shootout
+    (function () {
+      let goals = 0, shots = 0;
+      const names = ['left', 'the middle', 'the right'];
+      document.querySelectorAll('#game-penalty button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          const shot = +b.dataset.dir, keeper = Math.floor(Math.random() * 3);
+          shots++;
+          if (shot === keeper) {
+            document.getElementById('pen-status').textContent = 'Saved! The keeper dived ' + names[keeper] + '.';
+          } else {
+            goals++;
+            document.getElementById('pen-status').textContent = 'GOAL! The keeper went ' + names[keeper] + '.';
+          }
+          document.getElementById('pen-score').textContent = 'Goals: ' + goals + ' / Shots: ' + shots;
+        });
+      });
+    })();
+
+    // Reaction Test
+    (function () {
+      const box = document.getElementById('react-box'), status = document.getElementById('react-status');
+      let state = 'idle', timer, start, best = null;
+      box.addEventListener('click', function () {
+        if (state === 'idle') {
+          state = 'wait';
+          box.className = '';
+          box.textContent = 'Wait for green...';
+          timer = setTimeout(function () {
+            state = 'go';
+            box.className = 'go';
+            box.textContent = 'CLICK!';
+            start = performance.now();
+          }, 1000 + Math.random() * 2500);
+        } else if (state === 'wait') {
+          clearTimeout(timer);
+          state = 'idle';
+          box.className = 'idle';
+          box.textContent = 'Too early! Click to try again';
+        } else {
+          const ms = Math.round(performance.now() - start);
+          if (best === null || ms < best) best = ms;
+          state = 'idle';
+          box.className = 'idle';
+          box.textContent = ms + ' ms. Click to play again';
+          status.textContent = 'Best: ' + best + ' ms';
+        }
+      });
+    })();
+
+    // Keepy-Uppy
+    (function () {
+      const area = document.getElementById('keepy-area'), ball = document.getElementById('keepy-ball');
+      const status = document.getElementById('keepy-status');
+      let y, vy, score = 0, best = 0, running = false, last;
+      function draw() { ball.style.top = y + 'px'; }
+      function reset() { y = 40; vy = 0; draw(); }
+      function frame(t) {
+        if (!running) return;
+        const dt = Math.min((t - last) / 16.67, 3);
+        last = t;
+        vy += 0.35 * dt;
+        y += vy * dt;
+        if (y < 0) { y = 0; vy = 0; }
+        draw();
+        if (y > area.clientHeight - ball.offsetHeight) {
+          running = false;
+          best = Math.max(best, score);
+          status.textContent = 'Dropped! Score: ' + score + '. Best: ' + best + '. Tap to retry';
+          return;
+        }
+        requestAnimationFrame(frame);
+      }
+      area.addEventListener('pointerdown', function () {
+        if (!running) {
+          running = true; score = 0; reset(); last = performance.now();
+          status.textContent = 'Score: 0';
+          requestAnimationFrame(frame);
+        }
+        vy = -8;
+        score++;
+        status.textContent = 'Score: ' + score;
+      });
+      reset();
+    })();
   </script>
 </body>
 </html>
