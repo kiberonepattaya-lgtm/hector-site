@@ -51,6 +51,19 @@
     color: var(--text);
     opacity: 0.8;
   }
+  .skills {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .skills li {
+    font-size: 1.1rem;
+    line-height: 1.5;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(31, 174, 98, 0.35);
+  }
+  .skills li:last-child { border-bottom: none; }
+  .skills strong { color: var(--neon); }
   nav a {
     color: var(--text);
     text-decoration: none;
@@ -268,6 +281,15 @@
   <section id="hobbies">
     <h2>My Hobbies</h2>
     <p>Football is my favorite sport — I love playing with friends and watching matches. When I'm not on the field, I enjoy coding small projects like this website, since it's fun to see something come to life.</p>
+  </section>
+
+  <section id="skills">
+    <h2>🔥 My favorite football skills</h2>
+    <ul class="skills">
+      <li><strong>Dribbling</strong> — weaving past defenders with quick touches and close control.</li>
+      <li><strong>Passing</strong> — finding a teammate with a sharp through ball at just the right moment.</li>
+      <li><strong>Free kicks</strong> — curling the ball over the wall and into the top corner.</li>
+    </ul>
   </section>
 
   <section id="contact">
