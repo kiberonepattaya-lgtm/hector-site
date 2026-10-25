@@ -572,5 +572,826 @@
   })();
 </script>
 <!-- PARTY END -->
+<!-- HARDMODE START -->
+<style>
+  #hm-root, #hm-vignette, #hm-fog { display: none; }
+  body.hardmode #hm-root { display: block; }
+
+  body.hardmode {
+    --bg: #05050a;
+    --panel: #0b0710;
+    --neon: #9fd6c4;
+    --neon-dim: #8b0000;
+    --text: #ece6ee;
+    background: radial-gradient(circle at top, #170b17, #05050a 70%) !important;
+    background-color: #05050a !important;
+    background-attachment: fixed !important;
+    animation: none !important;
+  }
+  body.hardmode .party-emoji,
+  body.hardmode .party-hero-emoji,
+  body.hardmode #party-toast { display: none !important; }
+
+  body.hardmode #hm-vignette {
+    display: block; position: fixed; inset: 0; z-index: 900; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, rgba(0,0,0,0.78) 100%);
+    animation: hm-flicker 9s infinite;
+  }
+  body.hardmode #hm-fog {
+    display: block; position: fixed; inset: -20%; z-index: 4; pointer-events: none; opacity: 0.22;
+    background:
+      radial-gradient(40% 30% at 20% 30%, rgba(127,255,212,0.28), transparent 70%),
+      radial-gradient(35% 28% at 75% 65%, rgba(139,0,0,0.35), transparent 70%),
+      radial-gradient(30% 25% at 50% 90%, rgba(127,255,212,0.2), transparent 70%);
+    animation: hm-fog 50s ease-in-out infinite alternate;
+  }
+  @keyframes hm-flicker {
+    0%, 100% { opacity: 0.95; } 7% { opacity: 0.8; } 9% { opacity: 1; }
+    47% { opacity: 0.9; } 50% { opacity: 0.7; } 52% { opacity: 0.95; }
+  }
+  @keyframes hm-fog {
+    from { transform: translate(-6%, 3%); }
+    to   { transform: translate(6%, -3%); }
+  }
+  @keyframes hm-glitch {
+    0%, 91%, 100% { text-shadow: 1px 0 rgba(139,0,0,0.9), -1px 0 rgba(127,255,212,0.25); }
+    93% { text-shadow: -3px 0 rgba(139,0,0,0.95), 3px 0 rgba(127,255,212,0.4); }
+    96% { text-shadow: 3px 0 rgba(139,0,0,0.95), -2px 0 rgba(127,255,212,0.3); }
+  }
+
+  body.hardmode h1,
+  body.hardmode section h2 { animation: hm-glitch 6s infinite; }
+  body.hardmode header {
+    background: rgba(5, 5, 10, 0.92);
+    border-bottom-color: #8b0000;
+    box-shadow: 0 0 15px rgba(139, 0, 0, 0.5);
+  }
+  body.hardmode header .logo { color: #d9a0a0; text-shadow: 0 0 8px #8b0000, 0 0 20px #5a0000; }
+  body.hardmode section {
+    position: relative;
+    border-color: #8b0000;
+    box-shadow: 0 0 15px rgba(139, 0, 0, 0.25);
+  }
+  body.hardmode section::before {
+    content: ""; position: absolute; top: 2px; right: 2px; width: 90px; height: 90px;
+    pointer-events: none; opacity: 0.6;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' fill='none' stroke='%238b0000' stroke-width='1.3'%3E%3Cpath d='M90 0L62 18L70 34L40 52L48 70L22 90M62 18L50 12M40 52L24 46'/%3E%3C/svg%3E") no-repeat;
+  }
+  body.hardmode .skills li { border-bottom-color: rgba(139, 0, 0, 0.5); }
+  body.hardmode footer { color: #b46a6a; border-top-color: #8b0000; }
+  body.hardmode .football { filter: hue-rotate(-140deg) saturate(0.5) brightness(0.85) drop-shadow(0 0 10px #8b0000); }
+  body.hardmode .bg-football,
+  body.hardmode .bg-controller { filter: hue-rotate(-140deg) saturate(0.6); }
+  body.hardmode button { border-color: #8b0000; color: #e3c4c4; box-shadow: 0 0 10px rgba(139, 0, 0, 0.55); }
+  body.hardmode button:hover { background: #8b0000; color: #fff; }
+
+  #hm-toggle {
+    position: fixed; left: 14px; bottom: 14px; z-index: 1001; margin: 0;
+    padding: 8px 14px; font-size: 0.9rem;
+    background: #0b0710; color: #e3c4c4; border: 2px solid #8b0000;
+    box-shadow: 0 0 10px rgba(139, 0, 0, 0.7);
+  }
+  #hm-toggle:hover { background: #8b0000; color: #fff; }
+
+  #hm-toast {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 1000;
+    display: flex; align-items: center; gap: 12px; max-width: 90vw;
+    padding: 10px 18px; border-radius: 4px;
+    background: rgba(5, 5, 10, 0.94); color: #ece6ee; border: 2px solid #8b0000;
+    box-shadow: 0 0 18px rgba(139, 0, 0, 0.8);
+    font-style: italic; opacity: 0; animation: hm-toast 6.5s ease forwards;
+  }
+  #hm-toast button { margin: 0; padding: 0 4px; font-size: 1rem; border: 0; background: none; box-shadow: none; color: inherit; }
+  #hm-toast button:hover { background: none; color: #fff; }
+  @keyframes hm-toast { 0% { opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* new sections */
+  .hm-zone { min-width: 92px; min-height: 80px; font-size: 2rem; border-radius: 14px; padding: 0 16px; }
+  .hm-zone.keeper { border-color: #c40000; background: rgba(139, 0, 0, 0.35); }
+  .hm-zone.tele { background: #5a0000; color: #fff; box-shadow: 0 0 18px #c40000; }
+  .hm-timer { height: 6px; max-width: 300px; margin: 14px auto 0; background: #1a0a10; border-radius: 3px; overflow: hidden; }
+  .hm-timer i { display: block; height: 100%; width: 0; background: #8b0000; }
+  .hm-canvas {
+    display: block; width: 480px; max-width: 100%; height: auto; aspect-ratio: 480 / 320;
+    margin: 0 auto; background: #000; border: 3px solid #fff; touch-action: none;
+  }
+  #hm-drib-canvas { border-color: #8b0000; }
+  .hm-canvas:focus-visible { outline: 2px dashed #c40000; outline-offset: 3px; }
+  .hm-pads { display: grid; grid-template-columns: repeat(3, 84px); gap: 10px; justify-content: center; }
+  .hm-pad { margin: 0; padding: 0; min-height: 76px; font-size: 2rem; border-radius: 12px; }
+  .hm-pad.lit { background: #7fffd4; color: #05050a; box-shadow: 0 0 22px #7fffd4; }
+  .hm-btnrow { margin-top: 4px; }
+  .hm-hpbox { max-width: 480px; margin: 0 auto 10px; text-align: left; font-family: monospace; font-size: 0.9rem; }
+  .hm-hprow { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .hm-lab { flex: 0 0 170px; }
+  .hm-bar { flex: 1; height: 12px; background: #2a0a0a; border: 1px solid #8b0000; }
+  .hm-bar i { display: block; height: 100%; width: 100%; background: #c40000; transition: width 0.25s; }
+  .hm-bar.me i { background: #e8d44d; }
+  .hm-menu { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; min-height: 56px; }
+  body.hardmode .hm-menu button {
+    margin-top: 0; border-radius: 4px; padding: 10px 20px; font-family: monospace; font-size: 1rem;
+    border-color: #d9a05b; color: #d9a05b; box-shadow: none;
+  }
+  body.hardmode .hm-menu button:hover { background: #d9a05b; color: #000; }
+  body.hardmode .hm-menu button.ready { border-color: #ffe94d; color: #ffe94d; }
+  body.hardmode .hm-menu button.ready:hover { background: #ffe94d; color: #000; }
+  body.hardmode .hm-menu button:disabled { opacity: 0.4; cursor: not-allowed; background: none; color: #d9a05b; }
+  body.hardmode .hm-menu .hm-padbtn { width: 64px; height: 56px; padding: 0; font-size: 1.4rem; touch-action: none; user-select: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    body.hardmode #hm-vignette, body.hardmode #hm-fog,
+    body.hardmode h1, body.hardmode section h2 { animation: none; }
+    #hm-toast { animation: none; opacity: 1; }
+  }
+</style>
+
+<div id="hm-vignette" aria-hidden="true"></div>
+<div id="hm-fog" aria-hidden="true"></div>
+<button id="hm-toggle" type="button">☠ Leave hard mode</button>
+
+<div id="hm-root">
+  <section class="minigame" id="hm-penalty">
+    <h2>🥅 The Last Penalty</h2>
+    <p class="hint">He is never where he was. Strike where he will not be.</p>
+    <div class="row">
+      <button type="button" class="hm-zone" data-z="0" aria-label="Left zone">⬅</button>
+      <button type="button" class="hm-zone" data-z="1" aria-label="Middle zone">⬆</button>
+      <button type="button" class="hm-zone" data-z="2" aria-label="Right zone">➡</button>
+    </div>
+    <div class="hm-timer" aria-hidden="true"><i id="hm-pen-bar"></i></div>
+    <div class="status" id="hm-pen-status" role="status">The net waits. It is patient.</div>
+    <button type="button" id="hm-pen-btn">Begin</button>
+  </section>
+
+  <section class="minigame" id="hm-dribble">
+    <h2>👁 Shadow Dribble</h2>
+    <p class="hint">Do not let them touch the ball. Do not look back.</p>
+    <canvas id="hm-drib-canvas" class="hm-canvas" width="480" height="320" tabindex="0" role="application"
+      aria-label="Shadow Dribble: move the football with the mouse, a finger, or the arrow keys and avoid the drifting eyes."></canvas>
+    <div class="status" id="hm-drib-status" role="status">They gather when you are not looking.</div>
+    <button type="button" id="hm-drib-btn">Begin</button>
+  </section>
+
+  <section class="minigame" id="hm-cipher">
+    <h2>ᚠ Cipher Lock</h2>
+    <p class="hint">Watch the glyphs wake. Speak them back in order.</p>
+    <div class="hm-pads">
+      <button type="button" class="hm-pad" data-g="0" aria-label="Glyph 1">ᚠ</button>
+      <button type="button" class="hm-pad" data-g="1" aria-label="Glyph 2">ᚢ</button>
+      <button type="button" class="hm-pad" data-g="2" aria-label="Glyph 3">ᚦ</button>
+      <button type="button" class="hm-pad" data-g="3" aria-label="Glyph 4">ᚨ</button>
+      <button type="button" class="hm-pad" data-g="4" aria-label="Glyph 5">ᚱ</button>
+      <button type="button" class="hm-pad" data-g="5" aria-label="Glyph 6">ᚲ</button>
+    </div>
+    <div class="status" id="hm-cipher-status" role="status">The lock is listening.</div>
+    <button type="button" id="hm-cipher-btn">Begin</button>
+  </section>
+
+  <section class="minigame" id="boss-fight">
+    <h2>🥅 The Goalkeeper Below</h2>
+    <p class="hint">Arrow keys or WASD to dodge. Space to jump or strike. On touch, use the buttons.</p>
+    <div class="hm-hpbox">
+      <div class="hm-hprow"><span class="hm-lab">THE GOALKEEPER BELOW</span><span class="hm-bar" aria-hidden="true"><i id="hm-boss-fill"></i></span><span id="hm-boss-hp">60/60</span></div>
+      <div class="hm-hprow"><span class="hm-lab">HECTOR</span><span class="hm-bar me" aria-hidden="true"><i id="hm-me-fill"></i></span><span id="hm-me-hp">20/20</span></div>
+    </div>
+    <canvas id="hm-boss-canvas" class="hm-canvas" width="480" height="320" tabindex="0" role="application"
+      aria-label="Boss fight arena. Choose FIGHT, ACT, ITEM or MERCY with the buttons below, then dodge the attacks with the arrow keys or WASD."></canvas>
+    <div class="hm-menu" id="hm-boss-menu"></div>
+    <div class="status" id="hm-boss-status" role="status">It is waiting.</div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var pick = function (a) { return a[Math.floor(Math.random() * a.length)]; };
+  var RM = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var EMO = '"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
+  var KEYMAP = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', Space: 'u' };
+  var body = document.body, root = $('hm-root'), tog = $('hm-toggle');
+  var footer = document.querySelector('footer');
+  if (footer && footer.parentNode) footer.parentNode.insertBefore(root, footer);
+
+  /* ---------- mysterious text (originals kept in data-hm-orig) ---------- */
+  var SWAPS = [
+    ['header .motto', 'Something beneath the pitch is learning, too.'],
+    ['nav a[href="#about"]', 'Origins'],
+    ['nav a[href="#hobbies"]', 'Rituals'],
+    ['nav a[href="#contact"]', 'Whisper'],
+    ['.hero h1', "Hector's Site… or is it?"],
+    ['.hero > p', 'Something is watching the scoreboard. It has been counting your kicks.'],
+    ['.hero > button', 'Listen'],
+    ['#greeting', 'You were not supposed to find this page.'],
+    ['#about h2', 'Who Is Hector?'],
+    ['#about p', 'He says he builds things on the computer. The computer says nothing.'],
+    ['#hobbies h2', 'What He Does After Dark'],
+    ['#hobbies p', 'He plays until the floodlights die. He codes until the screen stares back. Neither is finished with him.'],
+    ['#skills h2', '🕯 Skills Learned In The Dark'],
+    ['#contact h2', 'Speak, If You Dare'],
+    ['#contact p', 'Leave a message. Someone will answer. Not today, perhaps. Not kindly, perhaps.'],
+    ['.clicker h2', 'Feed The Ball'],
+    ['#game-penalty h2', '🥅 The Goal Has No Bottom'],
+    ['#game-penalty .hint', 'Pick a corner. Something already chose one for you.'],
+    ['#game-reaction h2', '⚡ Blink And It Takes You'],
+    ['#game-reaction .hint', 'Wait for the colour to change. Do not wait too long.'],
+    ['#game-keepy h2', '⚽ Never Let It Touch The Ground'],
+    ['#game-keepy .hint', 'Keep it in the air. The ground is hungry.']
+  ];
+  function swapText(on) {
+    SWAPS.forEach(function (p) {
+      var el = document.querySelector(p[0]);
+      if (!el) return;
+      if (on) {
+        if (el.dataset.hmOrig === undefined) el.dataset.hmOrig = el.textContent;
+        el.textContent = p[1];
+      } else if (el.dataset.hmOrig !== undefined) {
+        el.textContent = el.dataset.hmOrig;
+        delete el.dataset.hmOrig;
+      }
+    });
+  }
+  function toast(msg) {
+    var old = $('hm-toast'); if (old) old.remove();
+    var t = document.createElement('div');
+    t.id = 'hm-toast'; t.setAttribute('role', 'status');
+    t.innerHTML = '<span></span><button type="button" aria-label="Dismiss">✕</button>';
+    t.firstChild.textContent = msg;
+    t.querySelector('button').addEventListener('click', function () { t.remove(); });
+    body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 6600);
+  }
+
+  /* ---------- The Last Penalty ---------- */
+  var pZ = document.querySelectorAll('#hm-penalty .hm-zone'), pBtn = $('hm-pen-btn'), pSt = $('hm-pen-status'), pBar = $('hm-pen-bar');
+  var ZN = ['Left zone', 'Middle zone', 'Right zone'], ZG = ['⬅', '⬆', '➡'];
+  var GOALS = ['It never saw you coming.', 'Another one swallowed by the dark.', 'The keeper blinked. You did not.', 'The net ripples. Nothing else does.'];
+  var pen = { on: false, live: false, goals: 0, k: 1, n: 0, best: 0, t1: 0, t2: 0 };
+  function penDraw(tele) {
+    for (var i = 0; i < 3; i++) {
+      var kp = pen.on && i === pen.k, tp = tele && i === pen.n;
+      pZ[i].textContent = tp ? '👁' : kp ? '🧤' : ZG[i];
+      pZ[i].classList.toggle('keeper', kp);
+      pZ[i].classList.toggle('tele', !!tp);
+      pZ[i].setAttribute('aria-label', ZN[i] + (kp ? ', the keeper stands here' : '') + (tp ? ', something is about to land here' : ''));
+    }
+  }
+  function penStop() {
+    clearTimeout(pen.t1); clearTimeout(pen.t2);
+    pen.on = false; pen.live = false;
+    pBar.style.transition = 'none'; pBar.style.width = '0%';
+  }
+  function penEnd(msg) {
+    penStop();
+    if (pen.goals > pen.best) pen.best = pen.goals;
+    pSt.textContent = msg + ' Goals: ' + pen.goals + ' · Best: ' + pen.best;
+    pBtn.textContent = 'Retry';
+    penDraw(false);
+  }
+  function penRound() {
+    var win = Math.max(350, 900 - 40 * pen.goals);
+    pen.n = (pen.k + 1 + Math.floor(Math.random() * 2)) % 3;
+    pen.live = true;
+    penDraw(true);
+    pen.t2 = setTimeout(function () { penDraw(false); }, Math.min(250, win * 0.5));
+    pBar.style.transition = 'none'; pBar.style.width = '100%'; void pBar.offsetWidth;
+    pBar.style.transition = 'width ' + win + 'ms linear'; pBar.style.width = '0%';
+    pen.t1 = setTimeout(function () {
+      if (pen.live) { pen.live = false; penEnd('Too slow. The dark does not wait.'); }
+    }, win);
+  }
+  Array.prototype.forEach.call(pZ, function (z, i) {
+    z.addEventListener('click', function () {
+      if (!pen.on || !pen.live) return;
+      pen.live = false;
+      clearTimeout(pen.t1); clearTimeout(pen.t2);
+      if (i === pen.k || i === pen.n) { penEnd('The glove closes. Something wrote that down.'); return; }
+      pen.goals++; pen.k = pen.n;
+      pBar.style.transition = 'none'; pBar.style.width = '0%';
+      penDraw(false);
+      pSt.textContent = pick(GOALS) + ' (' + pen.goals + ')';
+      pen.t2 = setTimeout(penRound, 450);
+    });
+  });
+  pBtn.addEventListener('click', function () {
+    penStop();
+    pen.on = true; pen.goals = 0; pen.k = 1;
+    pSt.textContent = 'He is watching. Choose where he is not.';
+    pBtn.textContent = 'Retry';
+    penDraw(false);
+    pen.t2 = setTimeout(penRound, 500);
+  });
+  penDraw(false);
+
+  /* ---------- Shadow Dribble ---------- */
+  var dC = $('hm-drib-canvas'), dX = dC.getContext('2d'), dBtn = $('hm-drib-btn'), dSt = $('hm-drib-status');
+  var DEND = ['They found you.', 'The dark closes its eyes.', 'You looked back.'];
+  var dr = { on: false, raf: 0, last: 0, t: 0, spawn: 0, orbs: [], bx: 240, by: 160, tx: 240, ty: 160, k: {}, best: 0 };
+  function dPos(e) {
+    var r = dC.getBoundingClientRect();
+    dr.tx = Math.max(12, Math.min(468, (e.clientX - r.left) * 480 / r.width));
+    dr.ty = Math.max(12, Math.min(308, (e.clientY - r.top) * 320 / r.height));
+  }
+  dC.addEventListener('pointermove', dPos);
+  dC.addEventListener('pointerdown', dPos);
+  dC.addEventListener('keydown', function (e) {
+    var k = e.code !== 'Space' && KEYMAP[e.code];
+    if (!k) return;
+    dr.k[k] = true;
+    if (e.code.indexOf('Arrow') === 0) e.preventDefault();
+  });
+  dC.addEventListener('keyup', function (e) { var k = KEYMAP[e.code]; if (k) dr.k[k] = false; });
+  dC.addEventListener('blur', function () { dr.k = {}; });
+  function dSpawn(spd) {
+    var s = Math.floor(Math.random() * 4), x, y;
+    if (s === 0) { x = Math.random() * 480; y = -16; }
+    else if (s === 1) { x = 496; y = Math.random() * 320; }
+    else if (s === 2) { x = Math.random() * 480; y = 336; }
+    else { x = -16; y = Math.random() * 320; }
+    var a = Math.atan2(dr.by - y, dr.bx - x) + (Math.random() - 0.5) * 0.7, v = spd * (0.8 + Math.random() * 0.4);
+    dr.orbs.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v });
+  }
+  function dDraw(msg) {
+    var c = dX;
+    c.fillStyle = '#07040a'; c.fillRect(0, 0, 480, 320);
+    var g = c.createRadialGradient(dr.bx, dr.by, 6, dr.bx, dr.by, 110);
+    g.addColorStop(0, 'rgba(127,255,212,0.22)'); g.addColorStop(1, 'rgba(127,255,212,0)');
+    c.fillStyle = g; c.fillRect(0, 0, 480, 320);
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.font = '24px ' + EMO;
+    dr.orbs.forEach(function (o) { c.fillText('👁', o.x, o.y); });
+    c.font = '28px ' + EMO; c.fillText('⚽', dr.bx, dr.by);
+    c.font = 'bold 14px monospace'; c.textAlign = 'left'; c.fillStyle = '#9fd6c4';
+    c.fillText(dr.t.toFixed(1) + 's', 10, 16);
+    if (msg) { c.textAlign = 'center'; c.font = 'bold 22px monospace'; c.fillStyle = '#c40000'; c.fillText(msg, 240, 90); }
+  }
+  function dEnd() {
+    dr.on = false; cancelAnimationFrame(dr.raf);
+    if (dr.t > dr.best) dr.best = dr.t;
+    var m = pick(DEND);
+    dSt.textContent = m + ' ' + dr.t.toFixed(1) + 's · Best: ' + dr.best.toFixed(1) + 's';
+    dBtn.textContent = 'Retry';
+    dDraw(m);
+  }
+  function dFrame(ts) {
+    if (!dr.on) return;
+    var dt = Math.min(0.05, (ts - dr.last) / 1000); dr.last = ts; dr.t += dt;
+    var k = dr.k;
+    dr.tx = Math.max(12, Math.min(468, dr.tx + ((k.r ? 1 : 0) - (k.l ? 1 : 0)) * 260 * dt));
+    dr.ty = Math.max(12, Math.min(308, dr.ty + ((k.d ? 1 : 0) - (k.u ? 1 : 0)) * 260 * dt));
+    var f = Math.min(1, 9 * dt);
+    dr.bx += (dr.tx - dr.bx) * f; dr.by += (dr.ty - dr.by) * f;
+    dr.spawn -= dt;
+    var spd = Math.min(230, 70 + dr.t * 5) * (RM ? 0.7 : 1);
+    if (dr.spawn <= 0) { dr.spawn = Math.max(0.28, 1.0 - dr.t * 0.025); dSpawn(spd); }
+    for (var i = dr.orbs.length - 1; i >= 0; i--) {
+      var o = dr.orbs[i];
+      o.x += o.vx * dt; o.y += o.vy * dt;
+      if (o.x < -60 || o.x > 540 || o.y < -60 || o.y > 380) { dr.orbs.splice(i, 1); continue; }
+      var dx = o.x - dr.bx, dy = o.y - dr.by;
+      if (dx * dx + dy * dy < 19 * 19) { dEnd(); return; }
+    }
+    dDraw();
+    dr.raf = requestAnimationFrame(dFrame);
+  }
+  dBtn.addEventListener('click', function () {
+    cancelAnimationFrame(dr.raf);
+    dr.on = true; dr.t = 0; dr.orbs = []; dr.spawn = 0.8; dr.k = {};
+    dr.bx = dr.tx = 240; dr.by = dr.ty = 160;
+    dSt.textContent = 'Do not let them touch the ball.';
+    dBtn.textContent = 'Retry';
+    dr.last = performance.now();
+    dC.focus({ preventScroll: true });
+    dr.raf = requestAnimationFrame(dFrame);
+  });
+  dDraw('Press Begin.');
+
+  /* ---------- Cipher Lock ---------- */
+  var cPads = document.querySelectorAll('#hm-cipher .hm-pad'), cBtn = $('hm-cipher-btn'), cSt = $('hm-cipher-status');
+  var ci = { on: false, accept: false, seq: [], pos: 0, rounds: 0, best: 0, tm: [] };
+  function ciLater(fn, ms) { ci.tm.push(setTimeout(fn, ms)); }
+  function ciRnd() { return Math.floor(Math.random() * 6); }
+  function ciStop() {
+    ci.tm.forEach(clearTimeout); ci.tm = [];
+    ci.on = false; ci.accept = false;
+    Array.prototype.forEach.call(cPads, function (p) { p.classList.remove('lit'); });
+  }
+  function ciShow() {
+    ci.accept = false; ci.pos = 0;
+    cSt.textContent = 'Watch. They are waking.';
+    var on = Math.max(170, 520 - 35 * ci.rounds), gap = Math.max(80, 220 - 12 * ci.rounds), t = 600;
+    ci.seq.forEach(function (g) {
+      ciLater(function () { cPads[g].classList.add('lit'); }, t);
+      ciLater(function () { cPads[g].classList.remove('lit'); }, t + on);
+      t += on + gap;
+    });
+    ciLater(function () { ci.accept = true; cSt.textContent = 'Now. Speak them back.'; }, t);
+  }
+  function ciEnd() {
+    var r = ci.rounds;
+    ciStop();
+    if (r > ci.best) ci.best = r;
+    cSt.textContent = 'Wrong. The lock remembers you. Rounds cleared: ' + r + ' · Best: ' + ci.best;
+    cBtn.textContent = 'Retry';
+  }
+  Array.prototype.forEach.call(cPads, function (p, i) {
+    p.addEventListener('click', function () {
+      if (!ci.on || !ci.accept) return;
+      p.classList.add('lit');
+      ciLater(function () { p.classList.remove('lit'); }, 140);
+      if (i !== ci.seq[ci.pos]) { ciEnd(); return; }
+      ci.pos++;
+      if (ci.pos === ci.seq.length) {
+        ci.accept = false; ci.rounds++; ci.seq.push(ciRnd());
+        cSt.textContent = 'The lock shifts… ' + ci.rounds + ' cleared.';
+        ciLater(ciShow, 900);
+      }
+    });
+  });
+  cBtn.addEventListener('click', function () {
+    ciStop();
+    ci.on = true; ci.rounds = 0;
+    ci.seq = [ciRnd(), ciRnd(), ciRnd(), ciRnd()];
+    cBtn.textContent = 'Retry';
+    ciShow();
+  });
+
+  /* ---------- Boss fight: The Goalkeeper Below ---------- */
+  var bc = $('hm-boss-canvas'), bx = bc.getContext('2d'), bsec = $('boss-fight');
+  var A = { x: 20, y: 92, w: 440, h: 216 };
+  var B = null, bRaf = 0, bLast = 0, bKeys = {};
+  var ty = { txt: '', n: 0 };
+  var FLAV = [
+    '* The air tastes of old grass and static.',
+    '* Something under the turf is breathing.',
+    '* The floodlights flicker. They are counting you.',
+    '* Your shadow arrived a moment after you did.',
+    '* A whistle blows. Nobody is holding it.'
+  ];
+  var CALM = ["You hear it too, don't you?", 'The net is hungrier than it looks.', 'Every ball you kick lands here, eventually.', 'Count the seconds. I already have.', 'Twelve of you stood there. Eleven stayed.'];
+  var ANGRY = ['STOP LISTENING TO THE WHISTLE.', 'You were never the striker.', 'I ERASED YOUR NAME FROM THE SCOREBOARD.', 'Down here the clock only runs backwards.', 'THE FINAL WHISTLE IS A LIE.'];
+  var ACTS = {
+    c: '* THE GOALKEEPER BELOW. ATK ∞ DEF ∞. It has been waiting a very long time.',
+    w: '* You whisper a name you do not remember learning. The net shivers.',
+    t: '* You wait. It waits. The floodlights hum a word you almost understand.'
+  };
+  var ORDER = ['rain', 'sweep', 'spiral', 'blue'];
+
+  function say(t) { ty.txt = t; ty.n = RM ? t.length : 0; }
+  function tyDone() { return ty.n >= ty.txt.length; }
+  function bossReset() {
+    B = { hp: 60, php: 20, mood: 0, used: {}, items: 3, turn: 0, angry: false, st: 'idle', t: 0, hold: 0, hit: 0, shake: 0, inv: 0,
+      bul: [], soul: { x: 0, y: 0, vy: 0, ground: false }, pat: '', sp: 1, dur: 8, sx: 0, ang: 0, cx: 0, dir: 1, next: '', pend: '', flav: '', kind: '' };
+  }
+  function setState(s) { B.st = s; B.t = 0; B.hold = 0; }
+  function bars() {
+    $('hm-boss-fill').style.width = Math.max(0, B.hp / 60 * 100) + '%';
+    $('hm-me-fill').style.width = Math.max(0, B.php / 20 * 100) + '%';
+    $('hm-boss-hp').textContent = Math.max(0, B.hp) + '/60';
+    $('hm-me-hp').textContent = Math.max(0, B.php) + '/20';
+    $('hm-boss-status').textContent = B.st === 'idle' ? 'It is waiting.' : 'Your HP ' + B.php + ' · Its HP ' + Math.max(0, B.hp) + ' · Mood ' + B.mood + '/3';
+  }
+  function menu(items) {
+    var m = $('hm-boss-menu'), had = bsec.contains(document.activeElement) && document.activeElement !== bc;
+    m.innerHTML = '';
+    items.forEach(function (it) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = it.l;
+      if (it.c) b.className = it.c;
+      if (it.d) b.disabled = true;
+      if (it.pad) {
+        var key = it.pad;
+        b.className = 'hm-padbtn'; b.setAttribute('aria-label', it.al);
+        b.addEventListener('pointerdown', function (e) { e.preventDefault(); bKeys[key] = true; });
+        ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { bKeys[key] = false; }); });
+        b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      } else {
+        b.addEventListener('click', it.f);
+      }
+      m.appendChild(b);
+    });
+    if (had) { var f = m.querySelector('button:not(:disabled)'); if (f) f.focus({ preventScroll: true }); }
+  }
+  function mainMenu(txt) {
+    setState('menu'); say(txt || B.flav);
+    menu([
+      { l: 'FIGHT', f: doFight },
+      { l: 'ACT', f: actMenu },
+      { l: 'ITEM', f: itemMenu },
+      { l: 'MERCY', f: doMercy, c: B.mood >= 3 ? 'ready' : '' }
+    ]);
+  }
+  function resultThen(next) { setState('result'); B.next = next; menu([]); bars(); }
+  function actMenu() {
+    setState('act'); say('* What will you do?');
+    menu([
+      { l: 'Check', f: function () { act('c'); } },
+      { l: 'Whisper', f: function () { act('w'); } },
+      { l: 'Wait', f: function () { act('t'); } },
+      { l: 'Back', f: function () { mainMenu(B.flav); } }
+    ]);
+  }
+  function act(k) {
+    var fresh = !B.used[k], t;
+    B.used[k] = 1;
+    if (fresh) { B.mood++; t = ACTS[k]; if (B.mood >= 3) t += ' Something in its stare softens.'; }
+    else t = '* Nothing answers. Not this time.';
+    say(t); resultThen('talk');
+  }
+  function itemMenu() {
+    setState('item'); say('* Your pockets hold what the cold left behind.');
+    menu([
+      { l: 'Cold Orange Slice x' + B.items, d: !B.items, f: useItem },
+      { l: 'Back', f: function () { mainMenu(B.flav); } }
+    ]);
+  }
+  function useItem() {
+    if (!B.items) return;
+    B.items--; B.php = Math.min(20, B.php + 15);
+    say('* You eat the Cold Orange Slice. It tastes like a half-time you cannot remember. (+15 HP)');
+    resultThen('talk');
+  }
+  function doMercy() {
+    if (B.mood >= 3) { bEnd('spare'); return; }
+    say('* You offer mercy. The Goalkeeper Below sneers. The moment is wasted.');
+    B.pend = 'Mercy? Down here? How… polite. How… useless.';
+    resultThen('talk');
+  }
+  function doFight() {
+    setState('fight'); say('* Strike when the mark is centred.');
+    B.cx = A.x + 20; B.dir = 1; bKeys = {};
+    menu([{ l: 'STRIKE!', f: strike }]);
+    bc.focus({ preventScroll: true });
+  }
+  function strike() {
+    if (B.st !== 'fight') return;
+    var ratio = Math.max(0, 1 - Math.abs(B.cx - (A.x + A.w / 2)) / (A.w / 2 - 20));
+    var dmg = Math.max(1, Math.round(18 * ratio * ratio));
+    B.hp -= dmg; B.hit = 0.45; B.shake = 0.25;
+    say(dmg >= 14 ? '* A clean strike. It flickers like a dying bulb. (-' + dmg + ')'
+      : dmg >= 6 ? '* It connects. The pitch seems to wince. (-' + dmg + ')'
+      : '* A glancing blow. It almost laughs. (-' + dmg + ')');
+    if (!B.angry && B.hp <= 30 && B.hp > 0) { B.angry = true; B.pend = '…Oh. So you can hurt me. How… quaint.'; }
+    resultThen(B.hp <= 0 ? 'win' : 'talk');
+  }
+  function startTalk() {
+    setState('talk');
+    var line = B.pend || pick(B.angry ? ANGRY : CALM);
+    B.pend = '';
+    say(line); menu([]);
+  }
+  function startAttack() {
+    setState('attack'); B.turn++;
+    var p = B.turn <= 4 ? ORDER[B.turn - 1] : pick(ORDER.filter(function (x) { return x !== B.pat; }));
+    B.pat = p; B.bul = []; B.dur = 8; B.sx = 0.6; B.ang = 0; B.inv = 0;
+    B.sp = (1 + B.turn * 0.07 + (B.angry ? 0.35 : 0)) * (RM ? 0.7 : 1);
+    B.soul = { x: A.x + A.w / 2, y: A.y + A.h / 2, vy: 0, ground: false };
+    if (p === 'blue') { B.soul.y = A.y + A.h - 7; B.soul.ground = true; }
+    bKeys = {};
+    menu([
+      { l: '◀', pad: 'l', al: 'Move left' }, { l: '▲', pad: 'u', al: 'Move up or jump' },
+      { l: '▼', pad: 'd', al: 'Move down' }, { l: '▶', pad: 'r', al: 'Move right' }
+    ]);
+    bc.focus({ preventScroll: true });
+  }
+  function hits(b) {
+    var s = B.soul;
+    if (b.k === 'c') { var dx = b.x - s.x, dy = b.y - s.y; return dx * dx + dy * dy < (b.r + 4) * (b.r + 4); }
+    if (b.k === 'r') return s.x + 4 > b.x && s.x - 4 < b.x + b.w && s.y + 4 > b.y && s.y - 4 < b.y + b.h;
+    return s.y + 4 > b.y && s.y - 4 < b.y + b.h && (s.x - 4 < b.gx || s.x + 4 > b.gx + b.gw);
+  }
+  function hurt(d) {
+    B.php = Math.max(0, B.php - d); B.inv = 1.1; B.shake = 0.25;
+    bars();
+    if (B.php <= 0) bEnd('lose');
+  }
+  function attackUpdate(dt) {
+    var s = B.soul, sp = B.sp, p = B.pat, k = bKeys;
+    var dx = (k.r ? 1 : 0) - (k.l ? 1 : 0), dy = (k.d ? 1 : 0) - (k.u ? 1 : 0);
+    var minX = A.x + 7, maxX = A.x + A.w - 7, minY = A.y + 7, maxY = A.y + A.h - 7;
+    if (p === 'blue') {
+      s.x += dx * 200 * dt;
+      if (k.u && s.ground) { s.vy = -430; s.ground = false; }
+      s.vy += 900 * dt; s.y += s.vy * dt;
+      if (s.y >= maxY) { s.y = maxY; s.vy = 0; }
+      if (s.y < minY) { s.y = minY; s.vy = 0; }
+      s.ground = s.y >= maxY - 0.5;
+    } else {
+      var m = dx && dy ? 0.7071 : 1;
+      s.x += dx * m * 170 * dt; s.y += dy * m * 170 * dt;
+    }
+    s.x = Math.max(minX, Math.min(maxX, s.x)); s.y = Math.max(minY, Math.min(maxY, s.y));
+
+    B.sx -= dt;
+    if (B.sx <= 0 && B.t < B.dur - 0.8) {
+      if (p === 'rain') {
+        B.sx = 0.38 / sp;
+        for (var n = 0; n < (Math.random() < 0.4 ? 2 : 1); n++)
+          B.bul.push({ k: 'c', x: A.x + 12 + Math.random() * (A.w - 24), y: A.y - 4, vx: 0, vy: (150 + Math.random() * 40) * sp, r: 9, g: '⚽' });
+      } else if (p === 'sweep') {
+        B.sx = 1.45 / sp;
+        var gw = 92;
+        B.bul.push({ k: 'bar', y: A.y - 12, h: 12, vy: 105 * sp, gx: A.x + 10 + Math.random() * (A.w - gw - 20), gw: gw });
+      } else if (p === 'spiral') {
+        B.sx = 0.11 / sp; B.ang += 0.33;
+        for (var q = 0; q < 2; q++) {
+          var a = Math.PI / 2 + Math.sin(B.ang + q * 2.1) * 1.3;
+          B.bul.push({ k: 'c', x: 240, y: 72, vx: Math.cos(a) * 125 * sp, vy: Math.sin(a) * 125 * sp, r: 6, g: '' });
+        }
+      } else {
+        B.sx = 0.95 / sp;
+        var side = Math.random() < 0.5 ? -1 : 1, vx = -side * 185 * sp, fl = A.y + A.h;
+        if (Math.random() < 0.5) B.bul.push({ k: 'r', x: side > 0 ? A.x + A.w + 4 : A.x - 22, y: fl - 34, w: 18, h: 34, vx: vx, vy: 0 });
+        else B.bul.push({ k: 'c', x: side > 0 ? A.x + A.w + 12 : A.x - 12, y: fl - 9, vx: vx, vy: 0, r: 9, g: '⚽' });
+      }
+    }
+    B.inv -= dt;
+    for (var i = B.bul.length - 1; i >= 0; i--) {
+      var b = B.bul[i];
+      if (b.k === 'bar') b.y += b.vy * dt; else { b.x += b.vx * dt; b.y += b.vy * dt; }
+      var out = b.k === 'bar' ? b.y > A.y + A.h + 4 : (b.x < A.x - 40 || b.x > A.x + A.w + 40 || b.y > A.y + A.h + 30 || b.y < -40);
+      if (out) { B.bul.splice(i, 1); continue; }
+      if (B.inv <= 0 && hits(b)) { hurt(b.k === 'bar' ? 5 : 4); if (B.st !== 'attack') return; }
+    }
+    if (B.t >= B.dur) {
+      B.bul = []; bKeys = {};
+      B.flav = pick(FLAV); mainMenu(B.flav);
+    }
+  }
+  function bEnd(kind) {
+    setState('over'); B.kind = kind; bKeys = {};
+    menu([{ l: 'Retry', f: startFight }]);
+    say(kind === 'win' ? '* The Goalkeeper Below crumbles into static. The net is empty at last. Somewhere, a floodlight dies.'
+      : kind === 'spare' ? '* You spare it. For a moment the whole pitch exhales. Somewhere, a whistle finally blows.'
+      : 'YOU SHOULD NOT HAVE COME HERE...');
+    bars();
+    $('hm-boss-status').textContent = kind === 'win' ? 'It is gone. The dark does not forgive.' : kind === 'spare' ? 'Spared. It will remember your kindness.' : 'You fell. It is still counting.';
+    if (!bRaf) { bLast = performance.now(); bRaf = requestAnimationFrame(bLoop); }
+  }
+
+  /* drawing */
+  function heart(c, x, y, col) {
+    c.save(); c.translate(x, y); c.fillStyle = col; c.beginPath();
+    c.moveTo(0, 6); c.bezierCurveTo(-10, -1, -6, -8, 0, -3); c.bezierCurveTo(6, -8, 10, -1, 0, 6);
+    c.fill(); c.restore();
+  }
+  function typed(c, x, y, w, lh, font, col) {
+    c.font = font; c.fillStyle = col; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    var words = ty.txt.split(' '), lines = [], cur = '';
+    words.forEach(function (wd) {
+      var tst = cur ? cur + ' ' + wd : wd;
+      if (c.measureText(tst).width > w && cur) { lines.push(cur); cur = wd; } else cur = tst;
+    });
+    if (cur) lines.push(cur);
+    var left = Math.floor(ty.n);
+    for (var i = 0; i < lines.length; i++) {
+      if (left <= 0) break;
+      c.fillText(lines[i].slice(0, left), x, y + i * lh);
+      left -= lines[i].length + 1;
+    }
+  }
+  function eye(c, x, y, r) { c.beginPath(); c.arc(x, y, r, 0, 6.283); c.fill(); }
+  function bDraw() {
+    var c = bx, st = B.st, now = performance.now() / 1000;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.fillStyle = '#000'; c.fillRect(0, 0, 480, 320);
+    if (B.shake > 0 && !RM) c.translate((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
+    var ox = (B.hit > 0 && !RM) ? (Math.random() - 0.5) * 10 : 0;
+    c.save();
+    c.globalAlpha = B.kind === 'win' ? 0.18 : B.kind === 'spare' ? 0.55 : 1;
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '56px ' + EMO; c.fillStyle = '#fff';
+    c.fillText('🥅', 240 + ox, 46);
+    if (B.kind !== 'spare' && B.kind !== 'win') {
+      var er = (B.angry ? 5 : 3.4) + (RM ? 0 : Math.sin(now * 3));
+      c.fillStyle = B.angry ? '#ff1a1a' : '#c40000';
+      eye(c, 229 + ox, 42, er); eye(c, 251 + ox, 42, er);
+    }
+    c.restore();
+    if (st === 'talk') {
+      c.fillStyle = '#fff'; c.fillRect(300, 6, 172, 76);
+      c.beginPath(); c.moveTo(300, 34); c.lineTo(288, 42); c.lineTo(300, 48); c.fill();
+      typed(c, 308, 22, 156, 15, '12px monospace', '#000');
+    }
+    c.strokeStyle = B.angry ? '#c40000' : '#fff'; c.lineWidth = 2;
+    c.strokeRect(A.x, A.y, A.w, A.h);
+    if (st === 'attack') {
+      B.bul.forEach(function (b) {
+        if (b.k === 'bar') {
+          c.fillStyle = '#e8e8e8';
+          c.fillRect(A.x, b.y, b.gx - A.x, b.h);
+          c.fillRect(b.gx + b.gw, b.y, A.x + A.w - (b.gx + b.gw), b.h);
+        } else if (b.k === 'r') {
+          c.fillStyle = '#d0d0d0'; c.fillRect(b.x, b.y, b.w, b.h);
+        } else if (b.g) {
+          c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = (b.r * 2 + 6) + 'px ' + EMO; c.fillText(b.g, b.x, b.y);
+        } else {
+          c.fillStyle = '#ff3b3b'; eye(c, b.x, b.y, b.r);
+          c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
+        }
+      });
+      if (!(B.inv > 0 && Math.floor(B.inv * 12) % 2)) heart(c, B.soul.x, B.soul.y, B.pat === 'blue' ? '#2b6bff' : '#ff1a1a');
+      c.fillStyle = '#5a0000'; c.fillRect(A.x, A.y + A.h + 4, A.w * Math.max(0, 1 - B.t / B.dur), 3);
+      if (B.pat === 'blue' && B.t < 1.6) {
+        c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.font = 'bold 14px monospace'; c.fillStyle = '#6fa0ff';
+        c.fillText('* GRAVITY. Jump with ▲ / W / Space.', 240, A.y + 24);
+      }
+    } else if (st === 'fight') {
+      typed(c, A.x + 14, A.y + 30, A.w - 28, 22, 'bold 15px monospace', '#fff');
+      var by = A.y + 120, g = c.createLinearGradient(A.x + 20, 0, A.x + A.w - 20, 0);
+      g.addColorStop(0, '#3a0000'); g.addColorStop(0.5, '#2f6d5b'); g.addColorStop(1, '#3a0000');
+      c.fillStyle = g; c.fillRect(A.x + 20, by, A.w - 40, 28);
+      c.strokeStyle = '#fff'; c.lineWidth = 2; c.strokeRect(A.x + 20, by, A.w - 40, 28);
+      c.fillStyle = '#7fffd4'; c.fillRect(A.x + A.w / 2 - 2, by, 4, 28);
+      c.fillStyle = '#fff'; c.fillRect(B.cx - 3, by - 6, 6, 40);
+    } else if (st === 'over' && B.kind === 'lose') {
+      typed(c, A.x + 14, A.y + 90, A.w - 28, 30, 'bold 22px monospace', '#c40000');
+      if (tyDone()) { c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '34px ' + EMO; c.fillText('💔', 240, A.y + 170); }
+    } else if (st !== 'talk') {
+      typed(c, A.x + 14, A.y + 30, A.w - 28, 24, 'bold 15px monospace', '#fff');
+    }
+  }
+  function bLoop(ts) {
+    if (!B || B.st === 'idle') { bRaf = 0; return; }
+    var dt = Math.min(0.05, (ts - bLast) / 1000); bLast = ts;
+    B.t += dt; B.hit = Math.max(0, B.hit - dt); B.shake = Math.max(0, B.shake - dt);
+    if (ty.n < ty.txt.length) ty.n = Math.min(ty.txt.length, ty.n + dt * 38);
+    if (tyDone()) B.hold += dt; else B.hold = 0;
+    if (B.st === 'fight') {
+      B.cx += B.dir * 430 * dt;
+      var lo = A.x + 20, hi = A.x + A.w - 20;
+      if (B.cx > hi) { B.cx = hi; B.dir = -1; }
+      if (B.cx < lo) { B.cx = lo; B.dir = 1; }
+    } else if (B.st === 'result') {
+      if (B.hold > 1.1) { if (B.next === 'win') bEnd('win'); else startTalk(); }
+    } else if (B.st === 'talk') {
+      if (B.hold > 0.9) startAttack();
+    } else if (B.st === 'attack') {
+      attackUpdate(dt);
+    }
+    bDraw();
+    if (B.st === 'over' && tyDone()) { bRaf = 0; return; }
+    bRaf = requestAnimationFrame(bLoop);
+  }
+  function startFight() {
+    cancelAnimationFrame(bRaf); bRaf = 0; bKeys = {};
+    bossReset();
+    B.flav = pick(FLAV);
+    mainMenu(B.flav);
+    bars();
+    bLast = performance.now();
+    bRaf = requestAnimationFrame(bLoop);
+  }
+  function bossInit() {
+    cancelAnimationFrame(bRaf); bRaf = 0; bKeys = {};
+    bossReset();
+    say('* Something waits beneath the pitch. It knows your name.');
+    ty.n = ty.txt.length;
+    menu([{ l: 'Begin', f: startFight }]);
+    bars(); bDraw();
+  }
+
+  /* boss input: listeners live on the section, so keys only arrive while focus is inside the fight */
+  bc.addEventListener('pointerdown', function () { if (B && B.st === 'fight') strike(); });
+  bsec.addEventListener('keydown', function (e) {
+    if (!B || (B.st !== 'attack' && B.st !== 'fight')) return;
+    var code = e.code || '';
+    var arrow = code.indexOf('Arrow') === 0, space = code === 'Space' && e.target === bc;
+    if (arrow || space) e.preventDefault();
+    if (B.st === 'fight') { if (space && !e.repeat) strike(); return; }
+    if (code === 'Space' && e.target !== bc) return;
+    var k = KEYMAP[code];
+    if (k) bKeys[k] = true;
+  });
+  bsec.addEventListener('keyup', function (e) { var k = KEYMAP[e.code || '']; if (k) bKeys[k] = false; });
+  bsec.addEventListener('focusout', function (e) { if (!bsec.contains(e.relatedTarget)) bKeys = {}; });
+
+  /* ---------- toggle ---------- */
+  function stopAll() {
+    penStop();
+    dr.on = false; cancelAnimationFrame(dr.raf);
+    ciStop();
+    bossInit();
+  }
+  function enter() {
+    body.classList.add('hardmode');
+    swapText(true);
+    tog.textContent = '☠ Leave hard mode';
+    toast('You were not supposed to find this page.');
+  }
+  function leave() {
+    body.classList.remove('hardmode');
+    swapText(false);
+    stopAll();
+    var t = $('hm-toast'); if (t) t.remove();
+    tog.textContent = '☠ Enter hard mode';
+  }
+  tog.addEventListener('click', function () {
+    if (body.classList.contains('hardmode')) leave(); else enter();
+  });
+
+  bossInit();
+  enter();
+})();
+</script>
+<!-- HARDMODE END -->
 </body>
 </html>
