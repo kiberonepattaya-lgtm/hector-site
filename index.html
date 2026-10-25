@@ -460,5 +460,117 @@
       reset();
     })();
   </script>
+<!-- PARTY START -->
+<style>
+  body {
+    background: linear-gradient(135deg, #39ff14, #00e5ff, #0066ff, #00e5ff, #39ff14) !important;
+    background-size: 400% 400% !important;
+    background-attachment: scroll !important;
+    animation: party-bg 8s ease infinite !important;
+  }
+  @keyframes party-bg {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .hero h1 { text-shadow: 0 0 10px rgba(57, 255, 20, 0.7), 0 0 22px rgba(0, 229, 255, 0.5); }
+  .party-emoji {
+    position: fixed;
+    bottom: -60px;
+    z-index: 1;
+    pointer-events: none;
+    user-select: none;
+    animation: party-float linear infinite;
+  }
+  @keyframes party-float {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.9; }
+    90%  { opacity: 0.9; }
+    100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+  }
+  .party-hero-emoji { margin: 0 6px; font-size: 1.4em; display: inline-block; }
+  #party-toast {
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 90vw;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(5, 19, 11, 0.92);
+    color: #d8ffe8;
+    border: 2px solid #39ff14;
+    box-shadow: 0 0 18px rgba(57, 255, 20, 0.7);
+    font-weight: bold;
+    opacity: 0;
+    animation: party-toast 5.8s ease forwards;
+  }
+  #party-toast button {
+    background: none;
+    border: 0;
+    color: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  @keyframes party-toast {
+    0%   { opacity: 0; }
+    8%   { opacity: 1; }
+    92%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    body { animation: none !important; background-position: 50% 50% !important; }
+    .party-emoji { display: none; }
+    #party-toast { animation: none; opacity: 1; }
+  }
+</style>
+<script>
+  (function () {
+    var sports = ['⚽', '🥅', '🏆', '👟', '🥇'];
+    var code = ['💻', '⌨️', '🐛', '🚀', '👾', '🧑‍💻'];
+    var all = sports.concat(code);
+    var pick = function (arr) { return arr[Math.floor(Math.random() * arr.length)]; };
+
+    var count = 25 + Math.floor(Math.random() * 6);
+    for (var i = 0; i < count; i++) {
+      var s = document.createElement('span');
+      s.className = 'party-emoji';
+      s.textContent = pick(all);
+      s.style.left = (Math.random() * 96) + 'vw';
+      s.style.fontSize = (18 + Math.random() * 30) + 'px';
+      s.style.animationDuration = (9 + Math.random() * 14) + 's';
+      s.style.animationDelay = (-Math.random() * 20) + 's';
+      document.body.appendChild(s);
+    }
+
+    var h1 = document.querySelector('.hero h1');
+    if (h1) {
+      var row = document.createElement('div');
+      row.setAttribute('aria-hidden', 'true');
+      row.style.textAlign = 'center';
+      for (var j = 0; j < 4; j++) {
+        var e = document.createElement('span');
+        e.className = 'party-hero-emoji';
+        e.textContent = pick(all);
+        row.appendChild(e);
+      }
+      h1.parentNode.insertBefore(row, h1);
+    }
+
+    var toast = document.createElement('div');
+    toast.id = 'party-toast';
+    toast.setAttribute('role', 'status');
+    toast.innerHTML = '<span>Top bins! That commit passed every test and the keeper never saw it coming! 🥅🚀</span>' +
+      '<button type="button" aria-label="Dismiss">✕</button>';
+    toast.querySelector('button').addEventListener('click', function () { toast.remove(); });
+    toast.addEventListener('animationend', function () { toast.remove(); });
+    document.body.appendChild(toast);
+  })();
+</script>
+<!-- PARTY END -->
 </body>
 </html>
