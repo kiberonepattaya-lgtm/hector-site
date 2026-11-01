@@ -882,7 +882,7 @@
     <h2>🥅 The Goalkeeper Below</h2>
     <p class="hint">Pick your controls: arrow keys / WASD (Space to jump or strike) or the mouse (move to dodge, hold the button to jump, click to strike).</p>
     <div class="hm-hpbox">
-      <div class="hm-hprow"><span class="hm-lab">THE GOALKEEPER BELOW</span><span class="hm-bar" aria-hidden="true"><i id="hm-boss-fill"></i></span><span id="hm-boss-hp">60/60</span></div>
+      <div class="hm-hprow"><span class="hm-lab" id="hm-boss-lab">THE GOALKEEPER BELOW</span><span class="hm-bar" aria-hidden="true"><i id="hm-boss-fill"></i></span><span id="hm-boss-hp">60/60</span></div>
       <div class="hm-hprow"><span class="hm-lab">HECTOR</span><span class="hm-bar me" aria-hidden="true"><i id="hm-me-fill"></i></span><span id="hm-me-hp">20/20</span></div>
     </div>
     <div class="hm-ctrl row" role="group" aria-label="Movement controls">
@@ -1163,33 +1163,92 @@
   var B = null, bRaf = 0, bLast = 0, bKeys = {};
   var ctrl = 'keys', ms = { x: 240, y: 200, down: false }, cat = $('hm-boss-cat');
   var ty = { txt: '', n: 0 };
-  var FLAV = [
-    '* The air tastes of old grass and static.',
-    '* Something under the turf is breathing.',
-    '* The floodlights flicker. They are counting you.',
-    '* Your shadow arrived a moment after you did.',
-    '* A whistle blows. Nobody is holding it.'
+  var LV = 0;
+  var PROLOGUE = [
+    "* Hector's last match never ended. The final whistle never blew, and the ball rolled down through the turf.",
+    '* Three guardians keep the Dark Stadium: the Goalkeeper Below, the Referee of Red Cards and the Floodlight King.',
+    '* Beat them, or spare them, and the Final Whistle is yours. Blow it, and the match can finally end.'
   ];
-  var CALM = ["You hear it too, don't you?", 'The net is hungrier than it looks.', 'Every ball you kick lands here, eventually.', 'Count the seconds. I already have.', 'Twelve of you stood there. Eleven stayed.'];
-  var ANGRY = ['STOP LISTENING TO THE WHISTLE.', 'You were never the striker.', 'I ERASED YOUR NAME FROM THE SCOREBOARD.', 'Down here the clock only runs backwards.', 'THE FINAL WHISTLE IS A LIE.'];
-  var ACTS = {
-    c: '* THE GOALKEEPER BELOW. ATK ∞ DEF ∞. It has been waiting a very long time.',
-    w: '* You whisper a name you do not remember learning. The net shivers.',
-    t: '* You wait. It waits. The floodlights hum a word you almost understand.'
-  };
-  var ORDER = ['rain', 'sweep', 'spiral', 'blue'];
+  var ENDING = [
+    '* You raise the Final Whistle and blow. The sound rolls through the stadium like a long exhale.',
+    '* The match is over. The ball rolls home to Hector, and morning light spills across the pitch.',
+    '* THE END. Thanks for playing!'
+  ];
+  var BOSS = [
+    {
+      name: 'THE GOALKEEPER BELOW', h2: '🥅 The Goalkeeper Below', hp: 60, items: 3, dmg: 4, spd: 1, dur: 8, ss: 430,
+      order: ['rain', 'sweep', 'spiral', 'blue'],
+      intro: ['* The Goalkeeper Below stands in a net with no bottom. Every shot ever missed lands behind him.'],
+      flav: ['* The air tastes of old grass and static.', '* Something under the turf is breathing.', '* The floodlights flicker. They are counting you.', '* Your shadow arrived a moment after you did.', '* A whistle blows. Nobody is holding it.'],
+      calm: ["You hear it too, don't you?", 'The net is hungrier than it looks.', 'Every ball you kick lands here, eventually.', 'Count the seconds. I already have.', 'Twelve of you stood there. Eleven stayed.'],
+      angry: ['STOP LISTENING TO THE WHISTLE.', 'You were never the striker.', 'I ERASED YOUR NAME FROM THE SCOREBOARD.', 'Down here the clock only runs backwards.', 'THE FINAL WHISTLE IS A LIE.'],
+      acts: { c: '* THE GOALKEEPER BELOW. ATK ∞ DEF ∞. It has been waiting a very long time.', w: '* You whisper a name you do not remember learning. The net shivers.', t: '* You wait. It waits. The floodlights hum a word you almost understand.' },
+      rage: '…Oh. So you can hurt me. How… quaint.',
+      mercyNo: '* You offer mercy. The Goalkeeper Below sneers. The moment is wasted.', mercyLine: 'Mercy? Down here? How… polite. How… useless.',
+      endWin: '* The Goalkeeper Below crumbles into static. The net is empty at last. Somewhere, a floodlight dies.',
+      endSpare: '* You spare it. For a moment the whole pitch exhales. Somewhere, a whistle finally blows.',
+      lose: 'YOU SHOULD NOT HAVE COME HERE...'
+    },
+    {
+      name: 'THE REFEREE OF RED CARDS', h2: '🟥 The Referee of Red Cards', hp: 80, items: 2, dmg: 5, spd: 1.15, dur: 9, ss: 520, em: '🟥',
+      order: ['cards', 'whistle', 'beams', 'blue'],
+      intro: ['* Past the net, a tunnel stretches into a dark that smells of whistles.', '* The Referee of Red Cards guards the rulebook that traps the match. It is quick, and it never forgives a foul.'],
+      flav: ['* A whistle shrieks from the tunnel.', '* Red and yellow flicker in the corner of your eye.', '* A linesman flag waves, though nobody is holding it.', '* Your name is on a list. It is in red ink.'],
+      calm: ['That tackle was a foul. All of them were.', 'Rules are rules. I wrote them in the dark.', 'Offside. You were offside the moment you were born.', "I'll show it slowly. Red."],
+      angry: ['NO MORE WARNINGS. NO MORE ADVANTAGE.', 'I AM THE MATCH. I DECIDE WHEN IT ENDS.', 'SENT OFF! SENT OFF! SENT OFF!', 'YOU CANNOT APPEAL THIS ONE.'],
+      acts: { c: '* THE REFEREE OF RED CARDS. ATK ∞ DEF ∞. It has never once let a match end.', w: '* You say "good game." The Referee flinches. Nobody ever said that to it.', t: '* You stand still. The whistle trembles, unsure who to blow for.' },
+      rage: '…A real tackle. Time to book you properly.',
+      mercyNo: '* You offer mercy. The Referee checks its rulebook. Mercy is not in it.', mercyLine: 'Mercy is not in the rulebook.',
+      endWin: '* The whistle cracks in half. The rulebook burns to ash and the tunnel lights flicker on.',
+      endSpare: '* The Referee tears up its red card and waves you through. "Play on," it whispers.',
+      lose: 'SENT OFF. THE MATCH GOES ON WITHOUT YOU...'
+    },
+    {
+      name: 'THE FLOODLIGHT KING', h2: '💡 The Floodlight King', hp: 100, items: 2, dmg: 6, spd: 1.3, dur: 10, ss: 620, em: '💡',
+      order: ['aimed', 'burst', 'beams', 'whistle', 'blue'],
+      intro: ['* The stadium goes dark. A single floodlight burns above the centre circle.', '* The Floodlight King sits beneath it, holding the Final Whistle. It will not give it up.'],
+      flav: ['* The last floodlight hums above you like a held breath.', '* The crowd is silent, and every seat is full.', "* The Final Whistle glints in the King's hand.", '* Your shadow stretches in four directions at once.'],
+      calm: ['Come closer. The light is warm.', 'Every match must end. Mine never will.', 'I kept the score. I kept all of it.', 'You made it this far. How… unfortunate.'],
+      angry: ['LET THE LIGHTS BURN YOU OUT!', 'I AM THE LAST MINUTE. I NEVER END.', 'THE CROWD ROARS FOR YOU TO FALL!', 'BLOW THE WHISTLE? YOU WILL NEVER REACH IT!'],
+      acts: { c: '* THE FLOODLIGHT KING. ATK ∞ DEF ∞. It guards the Final Whistle.', w: '* You whisper "let it end." The floodlights dim, just for a moment.', t: '* You wait in the light. For one second, the crowd listens.' },
+      rage: '…You hurt like light does. Good. Burn with me.',
+      mercyNo: '* You offer mercy. The Floodlight King laughs. The match cannot end that way. Not yet.', mercyLine: 'Mercy? The match cannot end that way. Not yet.',
+      endWin: '* The Floodlight King falls and the Final Whistle rolls to your feet. The last light goes out.',
+      endSpare: '* The Floodlight King hands you the whistle, and the dark lights turn gold.',
+      lose: 'THE LIGHT NEVER FORGETS...'
+    }
+  ];
+  function BO() { return BOSS[LV]; }
+  function bossUI() {
+    bsec.querySelector('h2').textContent = BO().h2;
+    $('hm-boss-lab').textContent = BO().name;
+    cat.style.display = LV === 0 ? '' : 'none';
+  }
+  function story(pages, doneLabel, done) {
+    var i = 0;
+    function show() {
+      setState('story'); say(pages[i]);
+      var last = i === pages.length - 1;
+      menu([{ l: last ? doneLabel : 'Continue', f: function () { if (last) done(); else { i++; show(); } } }]);
+    }
+    show();
+    if (!bRaf) { bLast = performance.now(); bRaf = requestAnimationFrame(bLoop); }
+  }
+  function descend() { LV++; bossReset(); bars(); story(BO().intro, 'Fight', startFight); }
+  function finish() { story(ENDING, 'Play again', bossInit); }
 
   function say(t) { ty.txt = t; ty.n = RM ? t.length : 0; }
   function tyDone() { return ty.n >= ty.txt.length; }
   function bossReset() {
-    B = { hp: 60, php: 20, mood: 0, used: {}, items: 3, turn: 0, angry: false, st: 'idle', t: 0, hold: 0, hit: 0, shake: 0, inv: 0,
+    B = { hp: BO().hp, max: BO().hp, php: 20, mood: 0, used: {}, items: BO().items, turn: 0, angry: false, st: 'idle', t: 0, hold: 0, hit: 0, shake: 0, inv: 0,
       bul: [], soul: { x: 0, y: 0, vy: 0, ground: false }, pat: '', sp: 1, dur: 8, sx: 0, ang: 0, cx: 0, dir: 1, next: '', pend: '', flav: '', kind: '' };
+    bossUI();
   }
   function setState(s) { B.st = s; B.t = 0; B.hold = 0; }
   function bars() {
-    $('hm-boss-fill').style.width = Math.max(0, B.hp / 60 * 100) + '%';
+    $('hm-boss-fill').style.width = Math.max(0, B.hp / B.max * 100) + '%';
     $('hm-me-fill').style.width = Math.max(0, B.php / 20 * 100) + '%';
-    $('hm-boss-hp').textContent = Math.max(0, B.hp) + '/60';
+    $('hm-boss-hp').textContent = Math.max(0, B.hp) + '/' + B.max;
     $('hm-me-hp').textContent = Math.max(0, B.php) + '/20';
     $('hm-boss-status').textContent = B.st === 'idle' ? 'It is waiting.' : 'Your HP ' + B.php + ' · Its HP ' + Math.max(0, B.hp) + ' · Mood ' + B.mood + '/3';
   }
@@ -1236,7 +1295,7 @@
   function act(k) {
     var fresh = !B.used[k], t;
     B.used[k] = 1;
-    if (fresh) { B.mood++; t = ACTS[k]; if (B.mood >= 3) t += ' Something in its stare softens.'; }
+    if (fresh) { B.mood++; t = BO().acts[k]; if (B.mood >= 3) t += ' Something in its stare softens.'; }
     else t = '* Nothing answers. Not this time.';
     say(t); resultThen('talk');
   }
@@ -1255,8 +1314,8 @@
   }
   function doMercy() {
     if (B.mood >= 3) { bEnd('spare'); return; }
-    say('* You offer mercy. The Goalkeeper Below sneers. The moment is wasted.');
-    B.pend = 'Mercy? Down here? How… polite. How… useless.';
+    say(BO().mercyNo);
+    B.pend = BO().mercyLine;
     resultThen('talk');
   }
   function doFight() {
@@ -1273,20 +1332,21 @@
     say(dmg >= 14 ? '* A clean strike. It flickers like a dying bulb. (-' + dmg + ')'
       : dmg >= 6 ? '* It connects. The pitch seems to wince. (-' + dmg + ')'
       : '* A glancing blow. It almost laughs. (-' + dmg + ')');
-    if (!B.angry && B.hp <= 30 && B.hp > 0) { B.angry = true; B.pend = '…Oh. So you can hurt me. How… quaint.'; }
+    if (!B.angry && B.hp <= B.max / 2 && B.hp > 0) { B.angry = true; B.pend = BO().rage; }
     resultThen(B.hp <= 0 ? 'win' : 'talk');
   }
   function startTalk() {
     setState('talk');
-    var line = B.pend || pick(B.angry ? ANGRY : CALM);
+    var line = B.pend || pick(B.angry ? BO().angry : BO().calm);
     B.pend = '';
     say(line); menu([]);
   }
   function startAttack() {
     setState('attack'); B.turn++;
-    var p = B.turn <= 4 ? ORDER[B.turn - 1] : pick(ORDER.filter(function (x) { return x !== B.pat; }));
-    B.pat = p; B.bul = []; B.dur = 8; B.sx = 0.6; B.ang = 0; B.inv = 0;
-    B.sp = (1 + B.turn * 0.07 + (B.angry ? 0.35 : 0)) * (RM ? 0.7 : 1);
+    var ord = BO().order;
+    var p = B.turn <= ord.length ? ord[B.turn - 1] : pick(ord.filter(function (x) { return x !== B.pat; }));
+    B.pat = p; B.bul = []; B.dur = BO().dur; B.sx = 0.6; B.ang = 0; B.inv = 0;
+    B.sp = (1 + B.turn * 0.07 + (B.angry ? 0.35 : 0)) * BO().spd * (RM ? 0.7 : 1);
     B.soul = { x: A.x + A.w / 2, y: A.y + A.h / 2, vy: 0, ground: false };
     if (p === 'blue') { B.soul.y = A.y + A.h - 7; B.soul.ground = true; }
     bKeys = {}; ms.x = B.soul.x; ms.y = B.soul.y; ms.down = false;
@@ -1299,6 +1359,14 @@
   }
   function hits(b) {
     var s = B.soul;
+    if (b.k === 'beam') return b.age > b.warn && s.x + 4 > b.x && s.x - 4 < b.x + b.w && s.y + 4 > b.y && s.y - 4 < b.y + b.h;
+    if (b.k === 'ring') {
+      var rx = s.x - b.x, ry = s.y - b.y;
+      if (Math.abs(Math.sqrt(rx * rx + ry * ry) - b.rad) > 7) return false;
+      var df = Math.atan2(ry, rx) - b.gap;
+      df = Math.atan2(Math.sin(df), Math.cos(df));
+      return Math.abs(df) > b.gw / 2;
+    }
     if (b.k === 'c') { var dx = b.x - s.x, dy = b.y - s.y; return dx * dx + dy * dy < (b.r + 4) * (b.r + 4); }
     if (b.k === 'r') return s.x + 4 > b.x && s.x - 4 < b.x + b.w && s.y + 4 > b.y && s.y - 4 < b.y + b.h;
     return s.y + 4 > b.y && s.y - 4 < b.y + b.h && (s.x - 4 < b.gx || s.x + 4 > b.gx + b.gw);
@@ -1352,6 +1420,29 @@
           var a = Math.PI / 2 + Math.sin(B.ang + q * 2.1) * 1.3;
           B.bul.push({ k: 'c', x: 240, y: 72, vx: Math.cos(a) * 125 * sp, vy: Math.sin(a) * 125 * sp, r: 6, g: '' });
         }
+      } else if (p === 'cards') {
+        B.sx = 0.5 / sp;
+        var cs = Math.random() < 0.5 ? -1 : 1, cy = Math.random() < 0.4 ? s.y - 12 : A.y + 8 + Math.random() * (A.h - 40);
+        B.bul.push({ k: 'r', x: cs > 0 ? A.x + A.w + 4 : A.x - 20, y: cy, w: 16, h: 24, vx: -cs * 210 * sp, vy: 0, col: Math.random() < 0.5 ? '#ff2a2a' : '#ffd23f' });
+      } else if (p === 'whistle') {
+        B.sx = 1.25 / sp;
+        B.bul.push({ k: 'ring', x: 240, y: 66, rad: 8, vr: 100 * sp, gap: Math.PI / 2 + (Math.random() - 0.5) * 2.2, gw: 1.0 });
+      } else if (p === 'beams') {
+        B.sx = 1.15 / sp;
+        var vert = Math.random() < 0.5, aim = Math.random() < 0.5;
+        if (vert) B.bul.push({ k: 'beam', x: Math.max(A.x, Math.min(A.x + A.w - 60, (aim ? s.x : A.x + Math.random() * (A.w - 60)) - 30)), y: A.y, w: 60, h: A.h, warn: 0.9 / Math.sqrt(sp), live: 0.35, age: 0 });
+        else B.bul.push({ k: 'beam', x: A.x, y: Math.max(A.y, Math.min(A.y + A.h - 44, (aim ? s.y : A.y + Math.random() * (A.h - 44)) - 22)), w: A.w, h: 44, warn: 0.9 / Math.sqrt(sp), live: 0.35, age: 0 });
+      } else if (p === 'aimed') {
+        B.sx = 0.6 / sp;
+        var aa = Math.atan2(s.y - 72, s.x - 240), spread = Math.random() < 0.35 ? [-0.28, 0, 0.28] : [0];
+        spread.forEach(function (o) { B.bul.push({ k: 'c', x: 240, y: 72, vx: Math.cos(aa + o) * 150 * sp, vy: Math.sin(aa + o) * 150 * sp, r: 6, g: '' }); });
+      } else if (p === 'burst') {
+        B.sx = 1.05 / sp;
+        var off = Math.random() * 6.283;
+        for (var bn = 0; bn < 14; bn++) {
+          var ba = off + bn * 6.283 / 14;
+          B.bul.push({ k: 'c', x: 240, y: 72, vx: Math.cos(ba) * 105 * sp, vy: Math.sin(ba) * 105 * sp, r: 6, g: '' });
+        }
       } else {
         B.sx = 0.95 / sp;
         var side = Math.random() < 0.5 ? -1 : 1, vx = -side * 185 * sp, fl = A.y + A.h;
@@ -1362,22 +1453,25 @@
     B.inv -= dt;
     for (var i = B.bul.length - 1; i >= 0; i--) {
       var b = B.bul[i];
-      if (b.k === 'bar') b.y += b.vy * dt; else { b.x += b.vx * dt; b.y += b.vy * dt; }
-      var out = b.k === 'bar' ? b.y > A.y + A.h + 4 : (b.x < A.x - 40 || b.x > A.x + A.w + 40 || b.y > A.y + A.h + 30 || b.y < -40);
+      if (b.k === 'bar') b.y += b.vy * dt;
+      else if (b.k === 'beam') b.age += dt;
+      else if (b.k === 'ring') b.rad += b.vr * dt;
+      else { b.x += b.vx * dt; b.y += b.vy * dt; }
+      var out = b.k === 'bar' ? b.y > A.y + A.h + 4 : b.k === 'beam' ? b.age > b.warn + b.live : b.k === 'ring' ? b.rad > 380 : (b.x < A.x - 40 || b.x > A.x + A.w + 40 || b.y > A.y + A.h + 30 || b.y < -40);
       if (out) { B.bul.splice(i, 1); continue; }
-      if (B.inv <= 0 && hits(b)) { hurt(b.k === 'bar' ? 5 : 4); if (B.st !== 'attack') return; }
+      if (B.inv <= 0 && hits(b)) { hurt(b.k === 'bar' || b.k === 'beam' ? BO().dmg + 1 : BO().dmg); if (B.st !== 'attack') return; }
     }
     if (B.t >= B.dur) {
       B.bul = []; bKeys = {};
-      B.flav = pick(FLAV); mainMenu(B.flav);
+      B.flav = pick(BO().flav); mainMenu(B.flav);
     }
   }
   function bEnd(kind) {
     setState('over'); B.kind = kind; bKeys = {};
-    menu([{ l: 'Retry', f: startFight }]);
-    say(kind === 'win' ? '* The Goalkeeper Below crumbles into static. The net is empty at last. Somewhere, a floodlight dies.'
-      : kind === 'spare' ? '* You spare it. For a moment the whole pitch exhales. Somewhere, a whistle finally blows.'
-      : 'YOU SHOULD NOT HAVE COME HERE...');
+    var last = LV >= BOSS.length - 1;
+    if (kind === 'lose') menu([{ l: 'Retry', f: startFight }]);
+    else menu([{ l: last ? 'Finish' : 'Descend', f: last ? finish : descend }]);
+    say(kind === 'win' ? BO().endWin : kind === 'spare' ? BO().endSpare : BO().lose);
     bars();
     $('hm-boss-status').textContent = kind === 'win' ? 'It is gone. The dark does not forgive.' : kind === 'spare' ? 'Spared. It will remember your kindness.' : 'You fell. It is still counting.';
     if (!bRaf) { bLast = performance.now(); bRaf = requestAnimationFrame(bLoop); }
@@ -1413,6 +1507,18 @@
     var ox = (B.hit > 0 && !RM) ? (Math.random() - 0.5) * 10 : 0;
     cat.style.opacity = B.kind === 'win' ? 0.18 : B.kind === 'spare' ? 0.55 : 1;
     cat.style.transform = 'translateX(calc(-50% + ' + ox + 'px))';
+    if (LV > 0) {
+      c.save();
+      c.globalAlpha = B.kind === 'win' ? 0.18 : B.kind === 'spare' ? 0.55 : 1;
+      c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '56px ' + EMO; c.fillStyle = '#fff';
+      c.fillText(BO().em, 240 + ox, 46);
+      if (B.kind !== 'spare' && B.kind !== 'win') {
+        var er = (B.angry ? 5 : 3.4) + (RM ? 0 : Math.sin(now * 3));
+        c.fillStyle = B.angry ? '#ff1a1a' : '#c40000';
+        eye(c, 229 + ox, 42, er); eye(c, 251 + ox, 42, er);
+      }
+      c.restore();
+    }
     if (st === 'talk') {
       c.fillStyle = '#fff'; c.fillRect(300, 6, 172, 76);
       c.beginPath(); c.moveTo(300, 34); c.lineTo(288, 42); c.lineTo(300, 48); c.fill();
@@ -1426,8 +1532,16 @@
           c.fillStyle = '#e8e8e8';
           c.fillRect(A.x, b.y, b.gx - A.x, b.h);
           c.fillRect(b.gx + b.gw, b.y, A.x + A.w - (b.gx + b.gw), b.h);
+        } else if (b.k === 'beam') {
+          if (b.age < b.warn) {
+            c.strokeStyle = 'rgba(255,255,255,' + (0.35 + 0.35 * Math.sin(b.age * 30)) + ')'; c.lineWidth = 2;
+            c.strokeRect(b.x + 1, b.y + 1, b.w - 2, b.h - 2);
+          } else { c.fillStyle = '#fff6b0'; c.fillRect(b.x, b.y, b.w, b.h); }
+        } else if (b.k === 'ring') {
+          c.strokeStyle = '#e8e8e8'; c.lineWidth = 3; c.beginPath();
+          c.arc(b.x, b.y, b.rad, b.gap + b.gw / 2, b.gap - b.gw / 2 + 6.283); c.stroke();
         } else if (b.k === 'r') {
-          c.fillStyle = '#d0d0d0'; c.fillRect(b.x, b.y, b.w, b.h);
+          c.fillStyle = b.col || '#d0d0d0'; c.fillRect(b.x, b.y, b.w, b.h);
         } else if (b.g) {
           c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = (b.r * 2 + 6) + 'px ' + EMO; c.fillText(b.g, b.x, b.y);
         } else {
@@ -1464,7 +1578,7 @@
     if (ty.n < ty.txt.length) ty.n = Math.min(ty.txt.length, ty.n + dt * 38);
     if (tyDone()) B.hold += dt; else B.hold = 0;
     if (B.st === 'fight') {
-      B.cx += B.dir * 430 * dt;
+      B.cx += B.dir * BO().ss * dt;
       var lo = A.x + 20, hi = A.x + A.w - 20;
       if (B.cx > hi) { B.cx = hi; B.dir = -1; }
       if (B.cx < lo) { B.cx = lo; B.dir = 1; }
@@ -1482,7 +1596,7 @@
   function startFight() {
     cancelAnimationFrame(bRaf); bRaf = 0; bKeys = {};
     bossReset();
-    B.flav = pick(FLAV);
+    B.flav = pick(BO().flav);
     mainMenu(B.flav);
     bars();
     bLast = performance.now();
@@ -1490,10 +1604,11 @@
   }
   function bossInit() {
     cancelAnimationFrame(bRaf); bRaf = 0; bKeys = {};
+    LV = 0;
     bossReset();
     say('* Something waits beneath the pitch. It knows your name.');
     ty.n = ty.txt.length;
-    menu([{ l: 'Begin', f: startFight }]);
+    menu([{ l: 'Begin', f: function () { story(PROLOGUE.concat(BOSS[0].intro), 'Fight', startFight); } }]);
     bars(); bDraw();
   }
 
