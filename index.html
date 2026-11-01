@@ -340,6 +340,52 @@
     <p>Some cards are famously rare. The most legendary is the Pikachu Illustrator, a 1998 promo card given to winners of an illustration contest in Japan, with only a few dozen ever made. A top-graded copy sold for over $5 million, the highest price ever paid for a Pokémon card. Other collector favorites include the 1st Edition Shadowless Charizard from the original Base Set, the Trophy Pikachu cards handed out at early tournaments, and rare prerelease cards that never reached stores. What makes a card valuable is how few exist, how good its condition is, and how much people want it.</p>
   </section>
 
+  <section class="minigame" id="random-fact">
+    <h2>🎢 Random Fact</h2>
+    <p class="hint">Universal theme parks and football, one fact at a time.</p>
+    <button type="button" id="fact-btn">Random fact</button>
+    <div class="status" id="fact-text" role="status" aria-live="polite">Click the button for a fun fact!</div>
+  </section>
+  <script>
+    (function () {
+      var facts = [
+        "Universal Studios Hollywood opened in 1964 as a behind-the-scenes studio tram tour, long before it had rides.",
+        "Universal Studios Florida opened on June 7, 1990, in Orlando.",
+        "Islands of Adventure opened in 1999 as Orlando's second Universal theme park.",
+        "The Wizarding World of Harry Potter opened at Islands of Adventure in 2010.",
+        "The Hogwarts Express train links two different Universal Orlando parks, so you need a park-to-park ticket to ride it.",
+        "The Incredible Hulk Coaster launches riders from 0 to 40 mph in about two seconds.",
+        "Universal Studios Japan opened in Osaka in 2001.",
+        "Super Nintendo World opened first at Universal Studios Japan, in 2021.",
+        "Universal Studios Singapore opened in 2010 at Resorts World Sentosa.",
+        "Universal Beijing Resort opened in 2021 and is one of the newest Universal parks in the world.",
+        "Universal Epic Universe opened in Orlando in May 2025 as the third Universal theme park there.",
+        "Hagrid's Magical Creatures Motorbike Adventure opened at Islands of Adventure in 2019.",
+        "The fastest goal in World Cup history took just 11 seconds, scored by Hakan Şükür for Turkey in 2002.",
+        "Pelé is the only player to win three World Cups, in 1958, 1962 and 1970.",
+        "The first World Cup was held in 1930 in Uruguay, and the hosts won it.",
+        "In 1966 the World Cup trophy was stolen in England and found a week later by a dog named Pickles.",
+        "Yellow and red cards were first used at the 1970 World Cup.",
+        "The penalty kick was introduced in 1891.",
+        "Sheffield FC, founded in 1857, is recognised as the oldest football club in the world.",
+        "Goal-line technology was used at a World Cup for the first time in 2014.",
+        "The Telstar, used at the 1970 World Cup, made the black-and-white football look famous.",
+        "The first Women's World Cup was played in China in 1991, and the USA won it.",
+        "Brazil won the World Cup in 1958, 1962, 1970, 1994 and 2002.",
+        "More than 170,000 people watched the 1950 World Cup final round match at the Maracanã stadium in Brazil."
+      ];
+      var last = -1;
+      var btn = document.getElementById('fact-btn'), out = document.getElementById('fact-text');
+      btn.addEventListener('click', function () {
+        var i;
+        do { i = Math.floor(Math.random() * facts.length); } while (i === last);
+        last = i;
+        out.textContent = facts[i];
+        btn.textContent = 'Another fact';
+      });
+    })();
+  </script>
+
   <section class="clicker">
     <h2>Kick the Ball!</h2>
     <button id="ball-btn" onclick="clickCount++; document.getElementById('click-count').textContent = 'Kicks: ' + clickCount;">⚽</button>
