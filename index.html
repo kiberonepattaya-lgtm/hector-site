@@ -733,6 +733,16 @@
   .hm-pad { margin: 0; padding: 0; min-height: 76px; font-size: 2rem; border-radius: 12px; }
   .hm-pad.lit { background: #7fffd4; color: #05050a; box-shadow: 0 0 22px #7fffd4; }
   .hm-btnrow { margin-top: 4px; }
+  .hm-stage { position: relative; width: 480px; max-width: 100%; margin: 0 auto; }
+  .hm-stage .hm-canvas { width: 100%; }
+  .hm-cat {
+    position: absolute; left: 50%; top: 0; width: 17%; height: 28%;
+    transform: translateX(-50%); object-fit: contain; pointer-events: none;
+    transition: opacity 0.6s;
+  }
+  .hm-ctrl { align-items: center; margin-bottom: 10px; font-family: monospace; font-size: 0.9rem; }
+  .hm-ctrl button { margin-top: 0; padding: 6px 14px; font-size: 0.9rem; }
+  .hm-ctrl button.on { background: #8b0000; color: #fff; }
   .hm-hpbox { max-width: 480px; margin: 0 auto 10px; text-align: left; font-family: monospace; font-size: 0.9rem; }
   .hm-hprow { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
   .hm-lab { flex: 0 0 170px; }
@@ -801,13 +811,24 @@
 
   <section class="minigame" id="boss-fight">
     <h2>🥅 The Goalkeeper Below</h2>
-    <p class="hint">Arrow keys or WASD to dodge. Space to jump or strike. On touch, use the buttons.</p>
+    <p class="hint">Pick your controls: arrow keys / WASD (Space to jump or strike) or the mouse (move to dodge, hold the button to jump, click to strike).</p>
     <div class="hm-hpbox">
       <div class="hm-hprow"><span class="hm-lab">THE GOALKEEPER BELOW</span><span class="hm-bar" aria-hidden="true"><i id="hm-boss-fill"></i></span><span id="hm-boss-hp">60/60</span></div>
       <div class="hm-hprow"><span class="hm-lab">HECTOR</span><span class="hm-bar me" aria-hidden="true"><i id="hm-me-fill"></i></span><span id="hm-me-hp">20/20</span></div>
     </div>
-    <canvas id="hm-boss-canvas" class="hm-canvas" width="480" height="320" tabindex="0" role="application"
-      aria-label="Boss fight arena. Choose FIGHT, ACT, ITEM or MERCY with the buttons below, then dodge the attacks with the arrow keys or WASD."></canvas>
+    <div class="hm-ctrl row" role="group" aria-label="Movement controls">
+      <span>Controls:</span>
+      <button type="button" data-c="keys" class="on" aria-pressed="true">WASD / Arrows</button>
+      <button type="button" data-c="mouse" aria-pressed="false">Mouse</button>
+    </div>
+    <div class="hm-stage">
+      <canvas id="hm-boss-canvas" class="hm-canvas" width="480" height="320" tabindex="0" role="application"
+        aria-label="Boss fight arena. Choose FIGHT, ACT, ITEM or MERCY with the buttons below, then dodge the attacks with the arrow keys, WASD or the mouse, depending on the controls you picked."></canvas>
+      <video id="hm-boss-cat" class="hm-cat" autoplay loop muted playsinline aria-hidden="true">
+        <source src="boss-cat.webm" type="video/webm">
+        <source src="boss-cat.mp4" type="video/mp4">
+      </video>
+    </div>
     <div class="hm-menu" id="hm-boss-menu"></div>
     <div class="status" id="hm-boss-status" role="status">It is waiting.</div>
   </section>
@@ -1071,6 +1092,7 @@
   var bc = $('hm-boss-canvas'), bx = bc.getContext('2d'), bsec = $('boss-fight');
   var A = { x: 20, y: 92, w: 440, h: 216 };
   var B = null, bRaf = 0, bLast = 0, bKeys = {};
+  var ctrl = 'keys', ms = { x: 240, y: 200, down: false }, cat = $('hm-boss-cat');
   var ty = { txt: '', n: 0 };
   var FLAV = [
     '* The air tastes of old grass and static.',
@@ -1198,8 +1220,9 @@
     B.sp = (1 + B.turn * 0.07 + (B.angry ? 0.35 : 0)) * (RM ? 0.7 : 1);
     B.soul = { x: A.x + A.w / 2, y: A.y + A.h / 2, vy: 0, ground: false };
     if (p === 'blue') { B.soul.y = A.y + A.h - 7; B.soul.ground = true; }
-    bKeys = {};
-    menu([
+    bKeys = {}; ms.x = B.soul.x; ms.y = B.soul.y; ms.down = false;
+    if (ctrl === 'mouse') menu([]);
+    else menu([
       { l: '◀', pad: 'l', al: 'Move left' }, { l: '▲', pad: 'u', al: 'Move up or jump' },
       { l: '▼', pad: 'd', al: 'Move down' }, { l: '▶', pad: 'r', al: 'Move right' }
     ]);
@@ -1218,16 +1241,27 @@
   }
   function attackUpdate(dt) {
     var s = B.soul, sp = B.sp, p = B.pat, k = bKeys;
+    var mouse = ctrl === 'mouse';
     var dx = (k.r ? 1 : 0) - (k.l ? 1 : 0), dy = (k.d ? 1 : 0) - (k.u ? 1 : 0);
     var minX = A.x + 7, maxX = A.x + A.w - 7, minY = A.y + 7, maxY = A.y + A.h - 7;
+    if (mouse) {
+      var mx = Math.max(minX, Math.min(maxX, ms.x)) - s.x, my = Math.max(minY, Math.min(maxY, ms.y)) - s.y;
+      var cap = (p === 'blue' ? 200 : 170) * dt;
+      if (p === 'blue') { s.x += Math.max(-cap, Math.min(cap, mx)); }
+      else {
+        var dist = Math.sqrt(mx * mx + my * my);
+        if (dist > cap) { mx *= cap / dist; my *= cap / dist; }
+        s.x += mx; s.y += my;
+      }
+    }
     if (p === 'blue') {
-      s.x += dx * 200 * dt;
-      if (k.u && s.ground) { s.vy = -430; s.ground = false; }
+      if (!mouse) s.x += dx * 200 * dt;
+      if ((mouse ? ms.down : k.u) && s.ground) { s.vy = -430; s.ground = false; }
       s.vy += 900 * dt; s.y += s.vy * dt;
       if (s.y >= maxY) { s.y = maxY; s.vy = 0; }
       if (s.y < minY) { s.y = minY; s.vy = 0; }
       s.ground = s.y >= maxY - 0.5;
-    } else {
+    } else if (!mouse) {
       var m = dx && dy ? 0.7071 : 1;
       s.x += dx * m * 170 * dt; s.y += dy * m * 170 * dt;
     }
@@ -1308,16 +1342,8 @@
     c.fillStyle = '#000'; c.fillRect(0, 0, 480, 320);
     if (B.shake > 0 && !RM) c.translate((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
     var ox = (B.hit > 0 && !RM) ? (Math.random() - 0.5) * 10 : 0;
-    c.save();
-    c.globalAlpha = B.kind === 'win' ? 0.18 : B.kind === 'spare' ? 0.55 : 1;
-    c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '56px ' + EMO; c.fillStyle = '#fff';
-    c.fillText('🥅', 240 + ox, 46);
-    if (B.kind !== 'spare' && B.kind !== 'win') {
-      var er = (B.angry ? 5 : 3.4) + (RM ? 0 : Math.sin(now * 3));
-      c.fillStyle = B.angry ? '#ff1a1a' : '#c40000';
-      eye(c, 229 + ox, 42, er); eye(c, 251 + ox, 42, er);
-    }
-    c.restore();
+    cat.style.opacity = B.kind === 'win' ? 0.18 : B.kind === 'spare' ? 0.55 : 1;
+    cat.style.transform = 'translateX(calc(-50% + ' + ox + 'px))';
     if (st === 'talk') {
       c.fillStyle = '#fff'; c.fillRect(300, 6, 172, 76);
       c.beginPath(); c.moveTo(300, 34); c.lineTo(288, 42); c.lineTo(300, 48); c.fill();
@@ -1344,7 +1370,7 @@
       c.fillStyle = '#5a0000'; c.fillRect(A.x, A.y + A.h + 4, A.w * Math.max(0, 1 - B.t / B.dur), 3);
       if (B.pat === 'blue' && B.t < 1.6) {
         c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.font = 'bold 14px monospace'; c.fillStyle = '#6fa0ff';
-        c.fillText('* GRAVITY. Jump with ▲ / W / Space.', 240, A.y + 24);
+        c.fillText(ctrl === 'mouse' ? '* GRAVITY. Hold the mouse button to jump.' : '* GRAVITY. Jump with ▲ / W / Space.', 240, A.y + 24);
       }
     } else if (st === 'fight') {
       typed(c, A.x + 14, A.y + 30, A.w - 28, 22, 'bold 15px monospace', '#fff');
@@ -1363,6 +1389,7 @@
   }
   function bLoop(ts) {
     if (!B || B.st === 'idle') { bRaf = 0; return; }
+    bc.style.cursor = (ctrl === 'mouse' && B.st === 'attack') ? 'none' : '';
     var dt = Math.min(0.05, (ts - bLast) / 1000); bLast = ts;
     B.t += dt; B.hit = Math.max(0, B.hit - dt); B.shake = Math.max(0, B.shake - dt);
     if (ty.n < ty.txt.length) ty.n = Math.min(ty.txt.length, ty.n + dt * 38);
@@ -1402,7 +1429,33 @@
   }
 
   /* boss input: listeners live on the section, so keys only arrive while focus is inside the fight */
-  bc.addEventListener('pointerdown', function () { if (B && B.st === 'fight') strike(); });
+  bc.addEventListener('pointerdown', function (e) {
+    if (B && B.st === 'fight') strike();
+    if (ctrl === 'mouse') { ms.down = true; bMouse(e); }
+  });
+  function bMouse(e) {
+    var r = bc.getBoundingClientRect();
+    ms.x = (e.clientX - r.left) * 480 / r.width;
+    ms.y = (e.clientY - r.top) * 320 / r.height;
+  }
+  bc.addEventListener('pointermove', function (e) { if (ctrl === 'mouse') bMouse(e); });
+  window.addEventListener('pointerup', function () { ms.down = false; });
+  Array.prototype.forEach.call(document.querySelectorAll('.hm-ctrl button'), function (b) {
+    b.addEventListener('click', function () {
+      ctrl = b.dataset.c; bKeys = {}; ms.down = false;
+      Array.prototype.forEach.call(document.querySelectorAll('.hm-ctrl button'), function (o) {
+        var on = o === b; o.classList.toggle('on', on); o.setAttribute('aria-pressed', on);
+      });
+      bc.style.cursor = '';
+      if (B && B.st === 'attack') { B.soul.x = Math.max(A.x + 7, Math.min(A.x + A.w - 7, B.soul.x)); ms.x = B.soul.x; ms.y = B.soul.y; if (ctrl === 'mouse') menu([]); else startPadsOnly(); }
+    });
+  });
+  function startPadsOnly() {
+    menu([
+      { l: '◀', pad: 'l', al: 'Move left' }, { l: '▲', pad: 'u', al: 'Move up or jump' },
+      { l: '▼', pad: 'd', al: 'Move down' }, { l: '▶', pad: 'r', al: 'Move right' }
+    ]);
+  }
   bsec.addEventListener('keydown', function (e) {
     if (!B || (B.st !== 'attack' && B.st !== 'fight')) return;
     var code = e.code || '';
