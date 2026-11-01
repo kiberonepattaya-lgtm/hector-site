@@ -386,6 +386,75 @@
     })();
   </script>
 
+  <section class="minigame" id="spooky-name">
+    <h2>🎃 Spooky Name Generator</h2>
+    <p class="hint">Find out what your name would be on Halloween night.</p>
+    <button type="button" id="spooky-open">Spooky name generator</button>
+  </section>
+
+  <div id="spooky-modal" role="dialog" aria-modal="true" aria-labelledby="spooky-title" hidden>
+    <div class="spooky-box">
+      <button type="button" class="spooky-close" id="spooky-close" aria-label="Close">✕</button>
+      <h3 id="spooky-title">What's your name?</h3>
+      <form id="spooky-form" autocomplete="off">
+        <input type="text" id="spooky-input" maxlength="24" placeholder="Type your name" aria-label="Your name">
+        <button type="submit">Get my spooky name</button>
+      </form>
+      <div id="spooky-result" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+  <style>
+    #spooky-modal[hidden] { display: none; }
+    #spooky-modal {
+      position: fixed; inset: 0; z-index: 1100;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.65); padding: 20px;
+    }
+    .spooky-box {
+      position: relative; width: 340px; max-width: 100%;
+      background: var(--panel); color: var(--text);
+      border: 1px solid var(--neon-dim); border-radius: 14px;
+      padding: 22px 24px; text-align: center;
+      box-shadow: 0 0 25px rgba(57, 255, 143, 0.3);
+    }
+    .spooky-box h3 { margin: 0 0 14px; font-size: 1.5rem; color: var(--neon); text-shadow: 0 0 8px var(--neon-dim); }
+    .spooky-box input[type="text"] {
+      width: 100%; font: inherit; font-size: 1.1rem; padding: 10px 14px;
+      color: var(--text); background: var(--bg);
+      border: 2px solid var(--neon-dim); border-radius: 30px; text-align: center;
+    }
+    .spooky-box input[type="text"]:focus { outline: none; border-color: var(--neon); box-shadow: 0 0 10px var(--neon); }
+    .spooky-box form button { font-size: 1rem; padding: 10px 22px; margin-top: 14px; }
+    .spooky-box .spooky-close {
+      position: absolute; top: 6px; right: 8px; margin: 0; padding: 2px 8px;
+      font-size: 1rem; border: 0; box-shadow: none; background: none;
+    }
+    .spooky-box .spooky-close:hover { background: none; color: var(--text); }
+    #spooky-result { margin-top: 16px; min-height: 1.5em; font-size: 1.4rem; font-weight: bold; color: var(--neon); text-shadow: 0 0 8px var(--neon-dim); overflow-wrap: anywhere; }
+  </style>
+  <script>
+    (function () {
+      var modal = document.getElementById('spooky-modal'), input = document.getElementById('spooky-input');
+      var out = document.getElementById('spooky-result'), openBtn = document.getElementById('spooky-open');
+      var TITLES = ['Count', 'Baron', 'Captain', 'Doctor', 'Professor', 'Phantom', 'Grim', 'Sir Spooky', 'Madame', 'Master'];
+      var ENDS = ['Moonlit', 'Haunted', 'Hollow', 'Wicked', 'Shadowed', 'Cursed', 'Ghostly', 'Midnight', 'Cobwebbed', 'Howling', 'Restless', 'Pumpkin-Headed'];
+      var pick = function (a) { return a[Math.floor(Math.random() * a.length)]; };
+      var lastFocus = null;
+      function open() { lastFocus = document.activeElement; modal.hidden = false; out.textContent = ''; input.value = ''; input.focus(); }
+      function close() { modal.hidden = true; if (lastFocus) lastFocus.focus(); }
+      openBtn.addEventListener('click', open);
+      document.getElementById('spooky-close').addEventListener('click', close);
+      modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) close(); });
+      document.getElementById('spooky-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var name = input.value.trim();
+        if (!name) { out.textContent = 'Type your name first... if you dare.'; input.focus(); return; }
+        out.textContent = '👻 ' + pick(TITLES) + ' ' + name + ' the ' + pick(ENDS) + ' 🎃';
+      });
+    })();
+  </script>
+
   <section class="clicker">
     <h2>Kick the Ball!</h2>
     <button id="ball-btn" onclick="clickCount++; document.getElementById('click-count').textContent = 'Kicks: ' + clickCount;">⚽</button>
