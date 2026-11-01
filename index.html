@@ -1468,5 +1468,123 @@
   <div class="thanks-line">Thanks for visiting my site!</div>
 </footer>
 <!-- MAGICFINALE END -->
+<!-- TRAIL START -->
+<style>
+  .trail-bit {
+    position: fixed;
+    z-index: 999;
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+    transform: translate(-50%, -50%);
+    animation: trail-fade var(--life, 700ms) ease-out forwards;
+  }
+  @keyframes trail-fade {
+    0%   { opacity: 0.95; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(120deg); }
+  }
+  #trail-panel {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 1001;
+    width: 168px;
+    padding: 8px 10px;
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--neon-dim);
+    border-radius: 14px;
+    box-shadow: 0 0 12px rgba(57, 255, 143, 0.25);
+    font-size: 0.8rem;
+  }
+  #trail-panel summary {
+    cursor: pointer;
+    color: var(--neon);
+    font-weight: bold;
+    text-shadow: 0 0 6px var(--neon-dim);
+    list-style: none;
+  }
+  #trail-panel summary::-webkit-details-marker { display: none; }
+  #trail-panel label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  #trail-panel select,
+  #trail-panel input[type="color"] {
+    font: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--neon-dim);
+    border-radius: 8px;
+    padding: 2px 4px;
+  }
+  #trail-panel input[type="color"] { width: 44px; height: 24px; padding: 1px; cursor: pointer; }
+  #trail-panel input[type="checkbox"] { accent-color: var(--neon); width: 16px; height: 16px; }
+</style>
+<details id="trail-panel" open>
+  <summary>✨ Mouse trail</summary>
+  <label>Shape
+    <select id="trail-shape">
+      <option value="🎢">Roller coasters</option>
+      <option value="⚽">Football</option>
+      <option value="🃏">Cards</option>
+    </select>
+  </label>
+  <label>Color <input type="color" id="trail-color" value="#39ff8f"></label>
+  <label>Length
+    <select id="trail-length">
+      <option value="short">Short</option>
+      <option value="medium" selected>Medium</option>
+      <option value="long">Long</option>
+    </select>
+  </label>
+  <label>Trail on <input type="checkbox" id="trail-on" checked></label>
+</details>
+<script>
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var shapeEl = $('trail-shape'), colorEl = $('trail-color'), lenEl = $('trail-length'), onEl = $('trail-on');
+    var panel = $('trail-panel');
+    var LIFE = { short: 400, medium: 800, long: 1400 };
+    var inside = false, lx = -999, ly = -999, bits = document.getElementsByClassName("trail-bit");
+
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) onEl.checked = false;
+
+    function clearTrail() {
+      document.querySelectorAll('.trail-bit').forEach(function (b) { b.remove(); });
+
+    }
+
+    document.addEventListener('mousemove', function (e) {
+      inside = true;
+      if (!onEl.checked || panel.contains(e.target)) return;
+      var dx = e.clientX - lx, dy = e.clientY - ly;
+      if (dx * dx + dy * dy < 22 * 22 || bits.length > 80) return;
+      lx = e.clientX; ly = e.clientY;
+      var life = LIFE[lenEl.value] || LIFE.medium;
+      var b = document.createElement('span');
+      b.className = 'trail-bit';
+      b.textContent = shapeEl.value;
+      b.style.left = lx + 'px';
+      b.style.top = ly + 'px';
+      b.style.fontSize = (16 + Math.random() * 10) + 'px';
+      b.style.setProperty('--life', life + 'ms');
+      b.style.textShadow = '0 0 6px ' + colorEl.value + ', 0 0 14px ' + colorEl.value;
+      b.style.filter = 'drop-shadow(0 0 5px ' + colorEl.value + ')';
+      document.body.appendChild(b);
+
+      setTimeout(function () { b.remove(); }, life);
+    });
+
+    document.documentElement.addEventListener('mouseleave', function () {
+      inside = false; lx = ly = -999; clearTrail();
+    });
+    onEl.addEventListener('change', function () { if (!onEl.checked) clearTrail(); });
+  })();
+</script>
+<!-- TRAIL END -->
 </body>
 </html>
